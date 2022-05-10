@@ -1,0 +1,256 @@
+openapi: 3.0.0
+info:
+  title: luna-creators-portal
+  version: 1.0.0
+servers:
+  - url: https://{{baseurl}}
+tags:
+  - name: admin
+  - name: auth
+
+paths:
+  /admin:
+    post:
+      tags:
+        - admin
+      summary: Signup Admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpAdminRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpAdminResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin public_address is required
+    get:
+      tags:
+        - admin
+      summary: Get Admin
+      operationId: GetAdmins
+      parameters:
+        - name: public_address
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminsResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 404
+                message: Token metadata was not found
+
+  /admin/{public_address}:
+    parameters:
+      - name: public_address
+        in: path
+        schema:
+          type: string
+        required: true
+    put:
+      tags:
+        - admin
+      summary: Update Admin username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpAdminResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin public_address is required
+
+  /auth/{user_type}:
+    parameters:
+      - name: user_type
+        in: path
+        schema:
+          type: string
+          enum:
+            - admin
+        required: true
+    post:
+      tags:
+        - auth
+      summary: Sign in admin
+      description: |
+        1. Get the user Nonce by making an API request to get the user.
+        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+        3. Let the user sign this with their wallet.
+        4. Send public_address and signature in request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin public_address is required
+components:
+  schemas:
+    GenericResponse:
+      properties:
+        error:
+          type: boolean
+          example: false
+        code:
+          type: number
+          example: 200
+        message:
+          type: string
+          example: Successful
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          description: First page is page 1, default size if not specified is 50.
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        last_page:
+          description: Last possible page
+          type: integer
+          format: int32
+        total_count:
+          type: integer
+          format: int32
+      example:
+        page: 1
+        size: 50
+        last_page: 5
+        total_count: 241
+
+    SignUpAdminRequest:
+      type: object
+      properties:
+        public_address:
+          type: string
+
+    SignUpAdminResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AdminData'
+
+    AdminData:
+      type: object
+      properties:
+        public_address:
+          type: string
+        username:
+          type: string
+        nonce:
+          type: number
+      example:
+        public_address: publicAddress
+        username: lekky
+        nonce: 345056
+
+    GetAdminsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminData'
+
+    UpdateAdminRequest:
+      type: object
+      properties:
+        username:
+          type: string
+
+    AuthRequest:
+      type: object
+      properties:
+        public_address:
+          type: string
+        signature:
+          type: string
+
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                user:
+                  oneOf:
+                    - $ref: '#/components/schemas/AdminData'
+
+    AddCartItemRequest:
+      type: object
+      properties:
+        item_id:
+          type: number
+          format: int32
+        quantity:
+          type: number
+          format: int32
+      example:
+        item_id: 48
+        quantity:
