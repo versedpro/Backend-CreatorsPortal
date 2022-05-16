@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node ./src/bin/www/index.ts",
-    "prod:start": "NODE_ENV=production node ./dist/bin/www/index.js",
+    "prod:start": "NODE_ENV=production node ./dist/src/bin/www/index.js",
     "dev:watch": "nodemon ./src/bin/www/index.ts",
     "build": "tsc",
     "test": "jest ./src/test/* --coverage",

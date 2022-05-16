@@ -1,7 +1,12 @@
+
 module.exports = {
     transform: {
         '^.+\\.ts?$': 'ts-jest',
     },
+    'testPathIgnorePatterns' : [
+        '<rootDir>/dist/'
+    ]
+
 };
 
 process.env = Object.assign(process.env, {
