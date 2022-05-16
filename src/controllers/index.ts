@@ -1,1 +1,1 @@
-export * from './metadata.controller';
+export * from './admin.controller';
