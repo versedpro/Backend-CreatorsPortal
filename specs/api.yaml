@@ -1,9 +1,11 @@
 openapi: 3.0.0
 info:
   title: luna-creators-portal
+  description: 'basePath is /api'
   version: 1.0.0
 servers:
-  - url: https://{{baseurl}}
+  - url: https://api.example.com/api
+    description: BasePath is /api
 tags:
   - name: admin
   - name: auth

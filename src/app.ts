@@ -12,6 +12,7 @@ import cors from 'cors';
 
 import ApiRoutes from './routes';
 import { ApiValidator } from './middlewares/openapi.validator';
+import apiDocsRoutes from './routes/api.docs';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
 
@@ -51,11 +52,17 @@ app.disable('x-powered-by');
 
 app.use(methodOverride());
 
-app.use(ApiValidator);
+app.use('/api', ApiValidator);
 
 const router = express.Router();
 
-router.use(ApiRoutes);
+router.use('/api', ApiRoutes);
+
+router.use('/api-docs', apiDocsRoutes);
+
+router.use('/health', (req, res) => {
+  res.send({ status: 'OK' });
+});
 
 app.use(router);
 
