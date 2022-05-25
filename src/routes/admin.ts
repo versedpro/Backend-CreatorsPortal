@@ -8,7 +8,7 @@ import { JWT_PUBLIC_KEY } from '../constants';
 const router = express.Router();
 const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
 
-// Add a admin
+// Add an admin
 router.post('/', signupAdminValidator(), controller.handleAddAdmin);
 
 // Get admins

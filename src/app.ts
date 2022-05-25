@@ -1,18 +1,19 @@
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import methodOverride from 'method-override';
 import cors from 'cors';
 
 import ApiRoutes from './routes';
+import { ApiValidator } from './middlewares/openapi.validator';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
-
 
 const app = express();
 
@@ -50,6 +51,8 @@ app.disable('x-powered-by');
 
 app.use(methodOverride());
 
+app.use(ApiValidator);
+
 const router = express.Router();
 
 router.use(ApiRoutes);
@@ -57,13 +60,22 @@ router.use(ApiRoutes);
 app.use(router);
 
 // Force all requests on production to be served over https
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   if (req.headers['x-forwarded-proto'] !== 'https' && isProduction) {
     const secureUrl = 'https://' + req.hostname + req.originalUrl;
     res.redirect(302, secureUrl);
   }
 
   next();
+});
+
+// eslint-disable-next-line no-unused-vars
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  // format error
+  return res.status(err.status || 500).json({
+    message: err.message,
+    errors: err.errors,
+  });
 });
 
 export default app;

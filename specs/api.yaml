@@ -49,7 +49,7 @@ paths:
           in: query
           schema:
             type: string
-            format: '/^0x[a-fA-F0-9]{40}$/'
+            pattern: (\b0x[a-fA-F0-9]{40}\b)
           required: false
       responses:
         '200':
@@ -75,7 +75,7 @@ paths:
         in: path
         schema:
           type: string
-          format: '/^0x[a-fA-F0-9]{40}$/'
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
         required: true
     put:
       tags:
@@ -150,7 +150,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: addOrganization
       summary: Add Organization
       requestBody:
@@ -179,9 +179,44 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: getOrganizationsInfo
       summary: Get all organizations info
+      parameters:
+        - name: name
+          description: part of the organization name
+          in: query
+          schema:
+            type: string
+            minLength: 2
+          required: false
+        - name: type
+          description: organization type
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrganizationType'
+          required: false
+        - name: admin_email
+          description: part of the admin email
+          in: query
+          schema:
+            type: string
+            minLength: 3
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
       responses:
         '200':
           description: Ok
@@ -212,7 +247,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: updateOrganization
       summary: Update organization info
       requestBody:
@@ -241,7 +276,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: getOrganization
       summary: Get organization
       responses:
@@ -274,7 +309,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: createNftCollection
       summary: Create NFT collection for organization
       requestBody:
@@ -289,70 +324,68 @@ paths:
                 contentType: image/png, image/jpeg
             schema: # Request payload
               type: object
+              required:
+                - name
+                - quantity
+                - royalties
+                - collection_name
+                - collection_description
+                - collection_about
+                - collection_image
+                - collection_background_header
+                - agree_to_terms
+                - understand_irreversible_action
               properties:
                 blockchain:
                   $ref: '#/components/schemas/SupportedChain'
                 name:
                   type: string
-                  required: true
                   minLength: 3
                   maxLength: 30
                 quantity:
                   type: integer
                   format: int32
                   default: 1
-                  required: true
                   minimum: 1
                 image:
                   type: string
                   format: binary
-                  required: true
                 royalties:
                   type: integer
                   format: int32
                   description: In percentage, e.g 7
-                  required: true
                 attributes:
                   type: array
-                  required: false
                   items:
                     $ref: '#/components/schemas/NftAttribute'
                 collection_name:
                   type: string
-                  required: true
                   minLength: 3
                   maxLength: 30
                 collection_description:
                   type: string
-                  required: true
                   minLength: 10
                   maxLength: 200
                 collection_about:
                   type: string
-                  required: true
                   minLength: 20
                   maxLength: 1000
                 collection_image:
                   type: string
                   format: binary
-                  required: true
                 collection_background_header:
                   type: string
                   format: binary
-                  required: true
                 agree_to_terms:
                   type: boolean
-                  required: true
                 understand_irreversible_action:
                   type: boolean
-                  required: true
                 track_ip_addresses:
                   type: boolean
-                  required: true
+                  default: false
                 first_party_data:
                   description: These are questions the organization would want to collect from minters.
                   type: array
-                  required: false
                   items:
                     $ref: '#/components/schemas/FirstPartyDatum'
       responses:
@@ -376,7 +409,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: []
+        - ApiAuthKey: [ ]
       operationId: getAllOrganizationCollections
       summary: Get All Organization Collections
       responses:
@@ -548,11 +581,12 @@ components:
 
     SignUpAdminRequest:
       type: object
+      required:
+        - public_address
       properties:
         public_address:
           type: string
-          required: true
-          format: '/^0x[a-fA-F0-9]{40}$/'
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
 
     SignUpAdminResponse:
       allOf:
@@ -571,10 +605,18 @@ components:
           type: string
         nonce:
           type: number
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
       example:
         public_address: publicAddress
         username: lekky
         nonce: 345056
+        created_at: '2022-05-25T13:38:57.920Z'
+        updated_at: '2022-05-25T13:38:57.920Z'
 
     GetAdminsResponse:
       allOf:
@@ -588,10 +630,11 @@ components:
 
     UpdateAdminRequest:
       type: object
+      required:
+        - username
       properties:
         username:
           type: string
-          required: true
           minLength: 3
           maxLength: 30
 
@@ -600,7 +643,7 @@ components:
       properties:
         public_address:
           type: string
-          format: '/^0x[a-fA-F0-9]{40}$/'
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
         signature:
           type: string
           minLength: 10
@@ -642,6 +685,23 @@ components:
           maxLength: 30
         type:
           $ref: '#/components/schemas/OrganizationType'
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        discord:
+          type: string
+          format: uri
+        admin_email:
+          type: string
+          format: email
+        admin_name:
+          type: string
+        admin_wallet_address:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
 
     UpdateOrganizationRequest:
       type: object
@@ -668,7 +728,7 @@ components:
           type: string
         admin_wallet_address:
           type: string
-          format: '/^0x[a-fA-F0-9]{40}$/'
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
 
     OrganizationInfo:
       type: object
@@ -698,7 +758,13 @@ components:
           type: string
         admin_wallet_address:
           type: string
-          format: '/^0x[a-fA-F0-9]{40}$/'
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
 
     UpdateOrganizationResponse:
       allOf:
@@ -713,14 +779,13 @@ components:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
           properties:
-            pagination:
-              $ref: '#/components/schemas/Pagination'
-        - type: object
-          properties:
             data:
-              type: array
-              items:
-                $ref: '#/components/schemas/OrganizationInfo'
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  $ref: '#/components/schemas/OrganizationInfo'
 
     GetOrganizationResponse:
       allOf:
@@ -736,6 +801,8 @@ components:
         - trait_type
       properties:
         trait_type:
+          type: string
+        display_type:
           type: string
         value:
           oneOf:
@@ -753,13 +820,12 @@ components:
     FirstPartyDatum:
       type: object
       required:
-        - type
+        - question_type
       properties:
         question_type:
           $ref: '#/components/schemas/FirstPartyDatumType'
         quesstion:
           type: string
-          required: false
           default: Email
         is_required:
           type: boolean
@@ -772,31 +838,29 @@ components:
 
     NftItem:
       type: object
+      required:
+        - name
+        - amount
       properties:
         name:
-          required: true
           minLength: 3
           maxLength: 30
         amount:
           type: integer
           format: int32
           default: 1
-          required: true
           minimum: 1
         image:
           type: string
           format: uri
         image_data:
-          required: false
           type: string
         royalties:
           type: integer
           format: int32
           description: In percentage, e.g 7
-          required: true
         attributes:
           type: array
-          required: false
           items:
             $ref: '#/components/schemas/NftAttribute'
         description:
@@ -824,22 +888,25 @@ components:
 
     NftCollectionInfo:
       type: object
+      required:
+        - name
+        - description
+        - about
+        - agree_to_terms
+        - understand_irreversible_action
       properties:
         chain:
           $ref: '#/components/schemas/SupportedChain'
         name:
           type: string
-          required: true
           minLength: 3
           maxLength: 30
         description:
           type: string
-          required: true
           minLength: 10
           maxLength: 200
         about:
           type: string
-          required: true
           minLength: 20
           maxLength: 1000
         contract_address:
@@ -852,55 +919,52 @@ components:
           format: uri
         agree_to_terms:
           type: boolean
-          required: true
         understand_irreversible_action:
           type: boolean
-          required: true
         track_ip_addresses:
           type: boolean
-          required: true
+          default: false
         first_party_data:
           description: These are questions the organization would want to collect from minters.
           type: array
-          required: false
           items:
             $ref: '#/components/schemas/FirstPartyDatum'
         created_at:
-          type: date
+          type: string
+          format: 'date-time'
         updated_at:
-          type: date
-
-    NftItemsArray:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/NftItem'
+          type: string
+          format: 'date-time'
 
     GetNftsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
           properties:
-            pagination:
-              $ref: '#/components/schemas/Pagination'
-        - $ref: '#/components/schemas/NftItemsArray'
+            data:
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NftItem'
 
     GetAllCollectionsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
           properties:
-            pagination:
-              $ref: '#/components/schemas/Pagination'
-        - type: object
-          properties:
             data:
-              items:
-                type: array
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
                 items:
-                  $ref: '#/components/schemas/NftCollectionInfo'
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NftCollectionInfo'
 
     GetCollectionResponse:
       allOf:

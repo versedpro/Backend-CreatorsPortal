@@ -3,7 +3,7 @@ import errorHandler from 'errorhandler';
 
 import app from '../../app';
 import { Logger } from '../../helpers/Logger';
-const knex = require('../../../data/db');
+import { db as knex } from '../../../data/db';
 
 app.use(errorHandler());
 

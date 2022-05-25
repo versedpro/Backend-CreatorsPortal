@@ -1,6 +1,6 @@
 export const APP_NAME = 'Luna Marketplace Backend';
 export const dbTables = {
-  nftProjects: 'nft_projects',
+  nftCollections: 'nft_collections',
   organizations: 'organizations',
   admins: 'admins',
 };
