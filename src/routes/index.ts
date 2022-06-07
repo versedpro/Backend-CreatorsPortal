@@ -5,6 +5,7 @@ import { routeError } from '../handlers';
 import adminRoutes from './admin';
 import authRoutes from './auth';
 import organizationRoutes from './organization';
+import collectionRoutes from './collection';
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
 import { RoleType } from '../interfaces/jwt.config';
@@ -14,6 +15,7 @@ const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
 
 router.use('/admin', adminRoutes);
 router.use('/auth', authRoutes);
+router.use('/organizations/:organization_id/collections', jwtHelper.requirePermission(RoleType.ADMIN), collectionRoutes);
 router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organizationRoutes);
 
 router.use(routeError);

@@ -1,0 +1,27 @@
+name: Test if code can be merged
+
+on: push
+
+jobs:
+  #First we will see the application build or not , then we will deploy in EC2
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Run build for Node version 14
+        node-version: [ 14 ]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      # installing Node
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          # this is regarding the matrix strategy specified above
+          node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      - run: npm run test
+      - run: npm run lint
+      - run: npm run build

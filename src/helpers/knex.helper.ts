@@ -4,12 +4,16 @@ import { Admin, GetAdminRequest, SaveAdminRequest, UpdateDbAdminRequest } from '
 import { db as knex } from '../../data/db';
 import {
   GetOrganizationInfoRequest,
-  GetOrganizationsRequest, GetOrganizationsResponse,
+  GetOrganizationsRequest,
+  GetOrganizationsResponse,
   OrganizationInfo,
   UpdateOrganizationRequest
 } from '../interfaces/organization';
 import { Logger } from './Logger';
 import { Pagination } from '../interfaces/pagination';
+import { CollectionInfo } from '../interfaces/collection';
+import { TokenExistsError } from '../interfaces';
+import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 
 export class KnexHelper {
   /*
@@ -131,5 +135,65 @@ export class KnexHelper {
       .where({ id: organization_id })
       .update(newOrg);
     return true;
+  }
+
+  /*
+  * NFT Collections CRUD
+  * */
+  static async insertNftCollection(collection: CollectionInfo): Promise<any> {
+    return knex(dbTables.nftCollections).insert(collection);
+  }
+
+  static async updateNftCollection(collection: CollectionInfo): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collection.id })
+      .update(collection);
+  }
+
+  static async getAllNftCollections(): Promise<CollectionInfo[]> {
+    const result = await knex(dbTables.nftCollections).select();
+    return result as CollectionInfo[];
+  }
+
+  static async getNftCollection(id: string): Promise<CollectionInfo[]> {
+    const result = await knex(dbTables.nftCollections).select().where({
+      id,
+    }).limit(1);
+    return result as CollectionInfo[];
+  }
+
+  static async deleteNftCollection(id: string): Promise<number> {
+    const tokenResult = await knex(dbTables.nftItems).count().where({ collection_id: id });
+    // Check if collection has tokens, do not delete.
+    // @ts-ignore
+    if (tokenResult.count > 0) {
+      throw new TokenExistsError();
+    }
+    return knex(dbTables.nftCollections).where({ id }).del();
+  }
+
+  static async insertMetadata(metadata: NftItem): Promise<any> {
+    return knex(dbTables.nftItems).insert(metadata);
+  }
+
+  static async upsertMetadata(metadata: NftItem): Promise<any> {
+    return knex(dbTables.nftItems).insert(metadata)
+      .onConflict(['collection_id', 'token_id'])
+      .merge()
+      .onConflict(['id'])
+      .merge();
+  }
+
+  static async updateMetadata(body: UpdateMetadataRequest): Promise<any> {
+    const result = await knex(dbTables.nftItems)
+      .where({ collection_id: body.collection_id })
+      .update(body.metadata);
+    Logger.Info(result);
+    return result;
+  }
+
+  static async getNftsByCollection(collection_id: string): Promise<NftItem[]> {
+    const result = await knex(dbTables.nftItems).select().where({ collection_id });
+    return result as NftItem[];
   }
 }

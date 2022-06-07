@@ -314,6 +314,9 @@ paths:
         - ApiAuthKey: [ ]
       operationId: createNftCollection
       summary: Create NFT collection for organization
+      description: |
+        Set create_contract to false if you want to save progress and finish later.
+        name and collection_name are always required
       requestBody:
         content:
           multipart/form-data: # Media type
@@ -328,34 +331,32 @@ paths:
               type: object
               required:
                 - name
-                - quantity
-                - royalties
                 - collection_name
-                - collection_description
-                - collection_about
-                - collection_image
-                - collection_background_header
-                - agree_to_terms
-                - understand_irreversible_action
               properties:
-                blockchain:
+                chain:
                   $ref: '#/components/schemas/SupportedChain'
+                collection_id:
+                  type: string
+                  format: uuid
+                  description: If continuation, specify the collection_id
                 name:
                   type: string
                   minLength: 3
                   maxLength: 30
                 quantity:
-                  type: integer
+                  type: string
                   format: int32
-                  default: 1
-                  minimum: 1
+                price:
+                  type: string
+                  format: double
                 image:
                   type: string
                   format: binary
                 royalties:
-                  type: integer
+                  type: string
                   format: int32
                   description: In percentage, e.g 7
+                  maximum: 100
                 attributes:
                   type: array
                   items:
@@ -379,12 +380,16 @@ paths:
                   type: string
                   format: binary
                 agree_to_terms:
-                  type: boolean
-                understand_irreversible_action:
-                  type: boolean
-                track_ip_addresses:
-                  type: boolean
+                  type: string
                   default: false
+                understand_irreversible_action:
+                  type: string
+                track_ip_addresses:
+                  type: string
+                  default: false
+                create_contract:
+                  type: string
+                  default: true
                 first_party_data:
                   description: These are questions the organization would want to collect from minters.
                   type: array
@@ -891,6 +896,7 @@ components:
     NftCollectionInfo:
       type: object
       required:
+        - chain
         - name
         - description
         - about
