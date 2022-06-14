@@ -14,6 +14,7 @@ import { Pagination } from '../interfaces/pagination';
 import { CollectionInfo } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
+import { GetItemRequest } from '../interfaces/get.item.request';
 
 export class KnexHelper {
   /*
@@ -150,6 +151,12 @@ export class KnexHelper {
       .update(collection);
   }
 
+  static async updateNftCollectionToDeployed(collectionId: string, contractAddress: string): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collectionId })
+      .update({ status: 'DEPLOYED', contract_address: contractAddress});
+  }
+
   static async getAllNftCollections(): Promise<CollectionInfo[]> {
     const result = await knex(dbTables.nftCollections).select();
     return result as CollectionInfo[];
@@ -194,6 +201,28 @@ export class KnexHelper {
 
   static async getNftsByCollection(collection_id: string): Promise<NftItem[]> {
     const result = await knex(dbTables.nftItems).select().where({ collection_id });
+    return result as NftItem[];
+  }
+
+  static async getSingleMetadata(body: GetItemRequest): Promise<NftItem[]> {
+    Logger.Info(body);
+    const result = await knex(dbTables.nftItems).select().where({
+      collection_id: body.collectionId,
+      token_id: body.tokenId
+    }).limit(1);
+
+    result.forEach((item: any) => {
+      delete item.id;
+      delete item.created_at;
+      delete item.updated_at;
+      delete item.collection_id;
+      
+      Object.keys(item).forEach(x => {
+        if(item[x] === null) {
+          delete item[x];
+        }
+      });
+    });
     return result as NftItem[];
   }
 }

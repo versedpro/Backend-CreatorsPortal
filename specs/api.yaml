@@ -4,13 +4,13 @@ info:
   description: 'basePath is /api'
   version: 1.0.0
 servers:
-  - url: https://api.example.com/api
-    description: BasePath is /api
+  - url: https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api
 tags:
   - name: admin
   - name: auth
   - name: organization
   - name: nft_collection
+  - name: nft
 
 paths:
   /admin:
@@ -357,6 +357,12 @@ paths:
                   format: int32
                   description: In percentage, e.g 7
                   maximum: 100
+                royalty_address:
+                  type: string
+                  pattern: (\b0x[a-fA-F0-9]{40}\b)
+                payout_address:
+                  type: string
+                  pattern: (\b0x[a-fA-F0-9]{40}\b)
                 attributes:
                   type: array
                   items:
@@ -544,6 +550,39 @@ paths:
                 code: 403
                 message: An admin auth key is required
 
+  /nft/{collection_id}/metadata/{token_id}:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: token_id
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      tags:
+        - nft
+      summary: Get Metadata by token id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NftItem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 404
+                message: Token metadata was not found
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -917,6 +956,10 @@ components:
           type: string
           minLength: 20
           maxLength: 1000
+        royalty_address:
+          type: string
+        payout_address:
+          type: string
         contract_address:
           type: string
         image:

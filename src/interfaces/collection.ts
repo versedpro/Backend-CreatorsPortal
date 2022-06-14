@@ -18,6 +18,8 @@ export interface CreateCollectionData {
   price: number;
   quantity: number;
   royalties: number;
+  royalty_address?: string;
+  payout_address?: string;
   attributes?: Attribute[];
   collection_id: string;
   collection_name: string;
@@ -38,6 +40,9 @@ export interface CollectionInfo {
   description?: string;
   royalties?: number;
   about: string;
+  status?: string;
+  royalty_address?: string;
+  payout_address?: string;
   contract_address?: string;
   image?: string;
   background_header?: string;
@@ -59,4 +64,9 @@ export interface UploadImagesResult {
   collectionImage?: string;
   collectionBgHeader?: string;
   itemsImages: string[];
+}
+
+export enum NftCollectionStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  DEPLOYED = 'DEPLOYED',
 }

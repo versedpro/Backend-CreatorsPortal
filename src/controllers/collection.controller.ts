@@ -20,11 +20,11 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     }
 
     if (req.body.price) {
-      data.price = parseInt(req.body.price);
+      data.price = parseFloat(req.body.price);
     }
 
     if (req.body.royalties) {
-      data.royalties = parseInt(req.body.royalties);
+      data.royalties = parseFloat(req.body.royalties);
     }
 
     data.agree_to_terms = JSON.parse(req.body.agree_to_terms || false);
@@ -36,6 +36,8 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       chain,
       name,
       price,
+      royalty_address,
+      payout_address,
       royalties,
       collection_name,
       collection_description,
@@ -63,6 +65,12 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
         errors.push('price is required');
       }
 
+      if (!royalty_address) {
+        errors.push('royalty_address is required');
+      }
+      if (!payout_address) {
+        errors.push('payout_address is required');
+      }
       if (!royalties) {
         errors.push('royalties is required');
       }
@@ -78,31 +86,32 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       if (!understand_irreversible_action) {
         errors.push('understand_irreversible_action is required');
       }
-      if (!track_ip_addresses) {
+      if (track_ip_addresses === undefined) {
         errors.push('track_ip_addresses is required');
       }
 
-      if (req.files?.length !== 3) {
-        errors.push('All 3 files are required');
-      }
-
-      if (req.files) {
-        const files = req.files as Express.Multer.File[];
-        const fieldNames = files.map(file => file.fieldname);
-        for (const field of ['image', 'collection_image', 'collection_background_header']) {
-          if (!fieldNames.includes(field)) {
-            errors.push(`file ${field} is required`);
-          }
-        }
-      }
+      // if (req.files?.length !== 3) {
+      //   errors.push('All 3 files are required');
+      // }
+      //
+      // if (req.files) {
+      //   const files = req.files as Express.Multer.File[];
+      //   const fieldNames = files.map(file => file.fieldname);
+      //   for (const field of ['image', 'collection_image', 'collection_background_header']) {
+      //     if (!fieldNames.includes(field)) {
+      //       errors.push(`file ${field} is required`);
+      //     }
+      //   }
+      // }
     }
 
     if (errors.length > 0) {
-      throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${errors.join(',')}`);
+      throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${errors.join(', ')}`);
     }
+
     const collectionArr = await collectionService.addCollection({
       organizationId,
-      data: req.body as CreateCollectionData,
+      data,
       files: req.files as Express.Multer.File[],
     });
 

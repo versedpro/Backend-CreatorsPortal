@@ -6,6 +6,8 @@ import adminRoutes from './admin';
 import authRoutes from './auth';
 import organizationRoutes from './organization';
 import collectionRoutes from './collection';
+import nftRoutes from './nft';
+
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
 import { RoleType } from '../interfaces/jwt.config';
@@ -17,6 +19,7 @@ router.use('/admin', adminRoutes);
 router.use('/auth', authRoutes);
 router.use('/organizations/:organization_id/collections', jwtHelper.requirePermission(RoleType.ADMIN), collectionRoutes);
 router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organizationRoutes);
+router.use('/nft', nftRoutes);
 
 router.use(routeError);
 
