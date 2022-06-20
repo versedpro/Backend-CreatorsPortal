@@ -17,5 +17,5 @@
     "outDir": "./dist"
   },
   "compileOnSave": true,
-  "include": ["."]
+  "include": [".", "src/**/*.json"]
 }
