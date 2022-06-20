@@ -3,5 +3,5 @@ export const dbTables = {
     organizations: 'organizations',
     admins: 'admins',
     nftItems: 'nft_items',
-    firstPartyQuestions: 'first_party_questions',
+    apiSecretKeys: 'api_secret_keys',
 };

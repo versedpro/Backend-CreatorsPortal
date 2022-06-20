@@ -11,10 +11,15 @@ import {
 } from '../interfaces/organization';
 import { Logger } from './Logger';
 import { Pagination } from '../interfaces/pagination';
-import { CollectionInfo } from '../interfaces/collection';
+import { CollectionInfo, DbGetOrganizationCollectionsRequest, GetCollectionsResponse } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 import { GetItemRequest } from '../interfaces/get.item.request';
+import {
+  InsertOrganizationKeyData,
+  OrganizationKey,
+  UpdateOrganizationKeyStatusData
+} from '../interfaces/OrganizationKey';
 
 export class KnexHelper {
   /*
@@ -74,7 +79,7 @@ export class KnexHelper {
     // Search params
     if (name) {
       clauses.push('name ILIKE ?');
-      values.push(`${name}%`);
+      values.push(`%${name}%`);
     }
     if (type) {
       clauses.push('type ILIKE ?');
@@ -82,7 +87,7 @@ export class KnexHelper {
     }
     if (admin_email) {
       clauses.push('admin_email ILIKE ?');
-      values.push(`${admin_email}%`);
+      values.push(`%${admin_email}%`);
     }
 
     if (clauses.length > 0) {
@@ -106,6 +111,7 @@ export class KnexHelper {
       .select()
       .joinRaw(rawQuery, values)
       .offset((page - 1) * size)
+      .orderBy('updated_at', 'desc')
       .limit(size);
 
     const allItems = result as OrganizationInfo[];
@@ -154,7 +160,7 @@ export class KnexHelper {
   static async updateNftCollectionToDeployed(collectionId: string, contractAddress: string): Promise<any> {
     return knex(dbTables.nftCollections)
       .where({ id: collectionId })
-      .update({ status: 'DEPLOYED', contract_address: contractAddress});
+      .update({ status: 'DEPLOYED', contract_address: contractAddress });
   }
 
   static async getAllNftCollections(): Promise<CollectionInfo[]> {
@@ -166,6 +172,11 @@ export class KnexHelper {
     const result = await knex(dbTables.nftCollections).select().where({
       id,
     }).limit(1);
+    return result as CollectionInfo[];
+  }
+
+  static async getNftCollectionByParams(params: any): Promise<CollectionInfo[]> {
+    const result = await knex(dbTables.nftCollections).select().where(params).limit(1);
     return result as CollectionInfo[];
   }
 
@@ -216,13 +227,63 @@ export class KnexHelper {
       delete item.created_at;
       delete item.updated_at;
       delete item.collection_id;
-      
+
       Object.keys(item).forEach(x => {
-        if(item[x] === null) {
+        if (item[x] === null) {
           delete item[x];
         }
       });
     });
     return result as NftItem[];
   }
+
+  static async insertOrganizationKey(data: InsertOrganizationKeyData): Promise<OrganizationKey> {
+    return knex(dbTables.apiSecretKeys).insert(data);
+  }
+
+  static async updateOrganizationKeyStatus(body: UpdateOrganizationKeyStatusData): Promise<any> {
+    return knex(dbTables.apiSecretKeys)
+      .where({ organization_id: body.organizationId })
+      .update({ status: body.status });
+  }
+
+  static async getActiveOrganizationKey(organizationId: string): Promise<OrganizationKey | undefined> {
+    const result = await knex(dbTables.apiSecretKeys).select().where({
+      organization_id: organizationId,
+      status: 'ACTIVE',
+    }).limit(1);
+    if (result.length > 0) {
+      return result[0] as OrganizationKey;
+    }
+    return undefined;
+  }
+
+
+  static async getCollections(request: DbGetOrganizationCollectionsRequest): Promise<GetCollectionsResponse> {
+    const { page, size, rawQuery, values } = request;
+
+    const countResult = await knex(dbTables.nftCollections)
+      .count('* as count')
+      .joinRaw(rawQuery, values)
+      .first();
+
+    const result = await knex(dbTables.nftCollections)
+      .select()
+      .joinRaw(rawQuery, values)
+      .offset((page - 1) * size)
+      .orderBy('updated_at', 'desc')
+      .limit(size);
+
+    const allItems = result as CollectionInfo[];
+    const count = parseInt(countResult?.count.toString() || '0');
+    const pagination: Pagination = {
+      page,
+      size: allItems.length,
+      last_page: Math.ceil(count / size),
+      total_count: count,
+    };
+
+    return { pagination, items: allItems };
+  }
+
 }

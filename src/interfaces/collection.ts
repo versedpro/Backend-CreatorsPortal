@@ -1,4 +1,5 @@
 import { Attribute } from './nft';
+import { Pagination } from './pagination';
 
 export enum FirstPartyDatumType {
   SHORT_TEXT = 'SHORT_TEXT',
@@ -69,4 +70,30 @@ export interface UploadImagesResult {
 export enum NftCollectionStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   DEPLOYED = 'DEPLOYED',
+}
+
+export interface GetCollectionRequest {
+  organizationId: string;
+  collectionId: string;
+}
+
+export interface GetOrganizationCollectionsRequest {
+  organization_id: string;
+  name?: string;
+  status?: NftCollectionStatus;
+  oldest_date?: number;
+  page: number;
+  size: number;
+}
+
+export interface DbGetOrganizationCollectionsRequest {
+  rawQuery: string;
+  values: string[];
+  page: number;
+  size: number;
+}
+
+export interface GetCollectionsResponse {
+  pagination?: Pagination;
+  items: CollectionInfo[];
 }

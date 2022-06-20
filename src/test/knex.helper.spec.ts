@@ -14,17 +14,17 @@ describe('Test where clause generation', () => {
   it('should generate name clause', async () => {
     const { rawQuery, values } = KnexHelper.generateOrganizationWhereClause({ name, ...request });
     expect(rawQuery).toEqual(' WHERE name ILIKE ?');
-    expect(values).toEqual([`${name}%`]);
+    expect(values).toEqual([`%${name}%`]);
   });
 
   it('should generate name and type clause', async () => {
     const { rawQuery, values } = KnexHelper.generateOrganizationWhereClause({ name, type, ...request });
     expect(rawQuery).toEqual(' WHERE name ILIKE ? AND type ILIKE ?');
-    expect(values).toEqual([`${name}%`, `${type}%`]);
+    expect(values).toEqual([`%${name}%`, `${type}%`]);
   });
   it('should generate name clause', async () => {
     const { rawQuery, values } = KnexHelper.generateOrganizationWhereClause({ name, type, admin_email, ...request });
     expect(rawQuery).toEqual(' WHERE name ILIKE ? AND type ILIKE ? AND admin_email ILIKE ?');
-    expect(values).toEqual([`${name}%`, `${type}%`, `${admin_email}%`]);
+    expect(values).toEqual([`%${name}%`, `${type}%`, `%${admin_email}%`]);
   });
 });

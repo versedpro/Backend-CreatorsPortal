@@ -3,6 +3,9 @@ import * as OrgService from './organization.service';
 import {
   CollectionInfo,
   CreateCollectionRequest,
+  GetCollectionRequest,
+  GetCollectionsResponse,
+  GetOrganizationCollectionsRequest,
   NftCollectionStatus,
   UploadImagesResult
 } from '../interfaces/collection';
@@ -235,4 +238,54 @@ function verifyNftReady(item: NftItem): string {
     errors.push('price is required');
   }
   return errors.join(', ');
+}
+
+export async function getCollectionByIdAndOrganization(body: GetCollectionRequest): Promise<CollectionInfo> {
+  const results = await KnexHelper.getNftCollectionByParams({
+    id: body.collectionId,
+    organization_id: body.organizationId
+  });
+  if (results.length === 0) {
+    throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
+  }
+  return results[0];
+}
+
+export function generateCollectionWhereClause(request: GetOrganizationCollectionsRequest): { rawQuery: string, values: any[] } {
+  const { organization_id, name, status, oldest_date } = request;
+
+  let rawQuery = '';
+  const clauses: string[] = [];
+  const values: any[] = [];
+  // Search params
+  clauses.push('organization_id = ?');
+  values.push(organization_id);
+
+  if (name) {
+    clauses.push('name ILIKE ?');
+    values.push(`%${name}%`);
+  }
+  if (status) {
+    clauses.push('status = ?');
+    values.push(status);
+  }
+
+  if (oldest_date) {
+    clauses.push('updated_at >= ?');
+    values.push(new Date(oldest_date));
+  }
+
+  rawQuery += ' WHERE ' + clauses.join(' AND ');
+
+  return { rawQuery, values };
+}
+
+export async function getOrganizationCollections(body: GetOrganizationCollectionsRequest): Promise<GetCollectionsResponse> {
+  const { rawQuery, values } = generateCollectionWhereClause(body);
+  return await KnexHelper.getCollections({
+    rawQuery,
+    values,
+    page: body.page,
+    size: body.size,
+  });
 }

@@ -3,8 +3,10 @@ import * as Response from '../helpers/response.manager';
 import * as orgService from '../services/organization.service';
 import { StatusCodes } from 'http-status-codes';
 import { UpdateOrganizationRequest } from '../interfaces/organization';
+import { Logger } from '../helpers/Logger';
 
 export async function handleAddOrganization(req: Request, res: ExpressResponse): Promise<void> {
+  Logger.Info('Create Organization request', req.body);
   try {
     const organization = await orgService.addOrganization(req.body as UpdateOrganizationRequest);
 
@@ -60,6 +62,36 @@ export async function handleUpdateOrganization(req: Request, res: ExpressRespons
     return Response.success(res, {
       message: 'Successful',
       response: organization,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGenerateOrganizationKeys(req: Request, res: ExpressResponse): Promise<void> {
+  try {
+    const { organization_id } = req.params;
+
+    const response = await orgService.generateOrganizationKeys(organization_id);
+
+    return Response.success(res, {
+      message: 'Successfully generated new keys',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetOrganizationKeys(req: Request, res: ExpressResponse): Promise<void> {
+  try {
+    const { organization_id } = req.params;
+
+    const response = await orgService.getActiveOrganizationKeys(organization_id);
+
+    return Response.success(res, {
+      message: 'Successfully returned keys',
+      response,
     }, StatusCodes.OK);
   } catch (err: any) {
     return Response.handleError(res, err);

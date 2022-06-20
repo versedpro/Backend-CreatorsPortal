@@ -1,14 +1,16 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { Response as ExpressResponse } from 'express';
+import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
-import { CreateCollectionData } from '../interfaces/collection';
+import { CreateCollectionData, NftCollectionStatus } from '../interfaces/collection';
 import { CustomError } from '../helpers';
+import { Logger } from '../helpers/Logger';
 
 export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  Logger.Info('Create Collection request', req.body);
   try {
     const organizationId = req.params.organization_id;
 
@@ -89,20 +91,6 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       if (track_ip_addresses === undefined) {
         errors.push('track_ip_addresses is required');
       }
-
-      // if (req.files?.length !== 3) {
-      //   errors.push('All 3 files are required');
-      // }
-      //
-      // if (req.files) {
-      //   const files = req.files as Express.Multer.File[];
-      //   const fieldNames = files.map(file => file.fieldname);
-      //   for (const field of ['image', 'collection_image', 'collection_background_header']) {
-      //     if (!fieldNames.includes(field)) {
-      //       errors.push(`file ${field} is required`);
-      //     }
-      //   }
-      // }
     }
 
     if (errors.length > 0) {
@@ -124,6 +112,45 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     return Response.success(res, {
       message: 'Successful',
       response: collectionArr[0],
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetCollections(req: Request, res: ExpressResponse): Promise<void> {
+  try {
+    const { organization_id } = req.params;
+
+    const { name, status, oldest_date, page, size } = req.query;
+
+    const response = await collectionService.getOrganizationCollections({
+      organization_id: <string>organization_id,
+      name: <string>name,
+      status: status ? <string>status as NftCollectionStatus : undefined,
+      oldest_date: oldest_date ? parseInt(<string>oldest_date) : undefined,
+      page: parseInt(<string>page || '1'),
+      size: parseInt(<string>size || '30'),
+    });
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetCollectionById(req: Request, res: ExpressResponse): Promise<void> {
+  try {
+    const { organization_id: organizationId, collection_id: collectionId } = req.params;
+
+    const response = await collectionService.getCollectionByIdAndOrganization({ organizationId, collectionId });
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
     }, StatusCodes.OK);
   } catch (err: any) {
     return Response.handleError(res, err);

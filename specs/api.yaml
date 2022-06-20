@@ -423,6 +423,39 @@ paths:
         - nft_collection
       security:
         - ApiAuthKey: [ ]
+      parameters:
+        - name: name
+          in: query
+          description: Search part or whole of the collection name
+          schema:
+            type: string
+          required: false
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/NftCollectionStatus'
+          required: false
+        - name: oldest_date
+          in: query
+          description: For the date filter, e.g Last 30 days
+          schema:
+            type: number
+            format: int64
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
       operationId: getAllOrganizationCollections
       summary: Get All Organization Collections
       responses:
@@ -583,6 +616,63 @@ paths:
                 error: true
                 code: 404
                 message: Token metadata was not found
+
+  /organizations/{organization_id}/keys:
+    parameters:
+      - name: organization_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - organization
+      security:
+        - ApiAuthKey: [ ]
+      operationId: generateOrganizationKeys
+      summary: Generate Organization API and secret keys
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateApiKeysResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+    get:
+      tags:
+        - organization
+      security:
+        - ApiAuthKey: [ ]
+      operationId: getOrganizationKeys
+      summary: Get Organization API and secret keys
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetApiKeysResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -968,6 +1058,8 @@ components:
         background_header:
           type: string
           format: uri
+        status:
+          $ref: '#/components/schemas/NftCollectionStatus'
         agree_to_terms:
           type: boolean
         understand_irreversible_action:
@@ -1046,3 +1138,38 @@ components:
         background_header:
           type: string
           format: uri
+
+    GenerateApiKeysResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            organization_id:
+              type: string
+              format: uuid
+            api_key:
+              type: string
+            secret_key:
+              type: string
+            created_at:
+              type: string
+              format: 'date-time'
+    GetApiKeysResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            organization_id:
+              type: string
+              format: uuid
+            api_key:
+              type: string
+            created_at:
+              type: string
+              format: 'date-time'
+
+    NftCollectionStatus:
+      type: string
+      enum:
+        - IN_PROGRESS
+        - DEPLOYED

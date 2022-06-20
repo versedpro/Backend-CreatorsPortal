@@ -4,7 +4,7 @@ export const dbTables = {
   organizations: 'organizations',
   admins: 'admins',
   nftItems: 'nft_items',
-  firstPartyQuestions: 'first_party_questions',
+  apiSecretKeys: 'api_secret_keys',
 };
 // Will make env variables later.
 export const ADMIN_ADDRESSES: string[] = (<string> process.env.ADMIN_ADDRESSES || '').split(','); // Fill up with permitted admin wallet addresses
