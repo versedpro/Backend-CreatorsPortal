@@ -1,10 +1,11 @@
 import express from 'express';
 import * as controller from '../controllers/collection.controller';
+import { createCollectionValidator } from '../middlewares/create.collection.validator';
 
 const router = express.Router({ mergeParams: true });
 
 // Update username for an admin
-router.post('/', controller.handleAddCollection);
+router.post('/', createCollectionValidator, controller.handleAddCollection);
 
 router.get('/', controller.handleGetCollections);
 

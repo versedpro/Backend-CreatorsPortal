@@ -364,7 +364,9 @@ paths:
                   type: string
                   pattern: (\b0x[a-fA-F0-9]{40}\b)
                 attributes:
-                  type: array
+                  type: string
+                  description: |
+                    JSON stringified array of NftAttribute object
                   items:
                     $ref: '#/components/schemas/NftAttribute'
                 collection_name:
@@ -397,8 +399,10 @@ paths:
                   type: string
                   default: true
                 first_party_data:
-                  description: These are questions the organization would want to collect from minters.
-                  type: array
+                  description: |
+                    JSON stringified array of FirstPartyDatum object
+                    <br/>These are questions the organization would want to collect from minters.
+                  type: string
                   items:
                     $ref: '#/components/schemas/FirstPartyDatum'
       responses:
@@ -956,9 +960,9 @@ components:
     FirstPartyDatum:
       type: object
       required:
-        - question_type
+        - type
       properties:
-        question_type:
+        type:
           $ref: '#/components/schemas/FirstPartyDatumType'
         quesstion:
           type: string
