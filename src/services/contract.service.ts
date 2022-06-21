@@ -1,11 +1,12 @@
 import { ApiRelayerParams } from 'defender-relay-client/lib/relayer';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { ethers } from 'ethers';
-import { DeployCollectionContractRequest } from '../interfaces/contract';
+import { AddMaxSupplyCallRequest, DeployCollectionContractRequest } from '../interfaces/contract';
 import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
 
 const FACTORY_ABI = require('../abis/LunaFactory.json');
+const COLLECTION_ABI = require('../abis/LunaCollection.json');
 
 const credentials: ApiRelayerParams = {
   apiKey: <string>process.env.DEFENDER_API_KEY,
@@ -35,3 +36,14 @@ export async function deployNftCollection(body: DeployCollectionContractRequest)
   }
 }
 
+export async function addMaxSupply(body: AddMaxSupplyCallRequest): Promise<any> {
+  const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
+  try {
+    const tx = await collection.setMaxSupply(body.tokenId || 1, body.quantity);
+    const minedTx = await tx.wait();
+    Logger.Info('Completed max supply call', minedTx);
+    return minedTx;
+  } catch (error) {
+    console.log(error);
+  }
+}

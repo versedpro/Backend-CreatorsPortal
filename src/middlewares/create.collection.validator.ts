@@ -27,7 +27,6 @@ function findError(req: Request): string | undefined {
           return 'attributes.*.trait_type is required';
         }
       }
-      req.body.attributes = parsedAttr;
     } catch (e) {
       return 'Valid attributes field is required';
     }
@@ -44,7 +43,6 @@ function findError(req: Request): string | undefined {
           return 'first_party_data.*.type is required';
         }
       }
-      req.body.first_party_data = parsedData;
     } catch (e) {
       return 'Valid first_party_data field is required';
     }

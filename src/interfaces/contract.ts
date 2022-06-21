@@ -72,3 +72,9 @@ export interface CallDataParam {
   indexed?: boolean;
   value?: string;
 }
+
+export interface AddMaxSupplyCallRequest {
+  contractAddress: string;
+  tokenId?: number;
+  quantity: number;
+}

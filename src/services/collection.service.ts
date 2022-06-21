@@ -66,11 +66,11 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);
-  // if (data.create_contract) {
-  //   if (!files || (files.length != 3)) {
-  //     throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload the 3 files');
-  //   }
-  // }
+  if (data.create_contract && !data.collection_id) {
+    if (!files || (files.length != 3)) {
+      throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload the 3 files');
+    }
+  }
   const { collectionImage, collectionBgHeader, itemsImages } = await uploadImages(folder, files);
 
   // Create and save collection:
@@ -131,13 +131,13 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
 
   const collections = await KnexHelper.getNftCollection(collectionId);
   if (data.create_contract) {
-    await callContract(collections[0]);
+    await callContract(collections[0], data.quantity);
     return await KnexHelper.getNftCollection(collectionId);
   }
   return collections;
 }
 
-async function callContract(collection: CollectionInfo) {
+async function callContract(collection: CollectionInfo, maxSupply?: number) {
   // 1. Get Collection and NFT info
   // 2. verify all data is present
   // 3. Call NFT Contract
@@ -169,7 +169,15 @@ async function callContract(collection: CollectionInfo) {
     if (createdLog) {
       const contractParam = createdLog.data?.params?.find(x => x.name === 'tokenContract');
       if (contractParam && contractParam.value) {
-        await KnexHelper.updateNftCollectionToDeployed(collection.id, JSON.parse(contractParam.value));
+        const contractAddress = JSON.parse(contractParam.value);
+        if (maxSupply) {
+          await ContractService.addMaxSupply({
+            contractAddress,
+            tokenId: 1,
+            quantity: maxSupply
+          });
+        }
+        await KnexHelper.updateNftCollectionToDeployed(collection.id, contractAddress);
       }
     }
   }

@@ -1,4 +1,3 @@
-import { Attribute } from './nft';
 import { Pagination } from './pagination';
 
 export enum FirstPartyDatumType {
@@ -21,7 +20,7 @@ export interface CreateCollectionData {
   royalties: number;
   royalty_address?: string;
   payout_address?: string;
-  attributes?: Attribute[];
+  attributes?: string;
   collection_id: string;
   collection_name: string;
   collection_description: string;
@@ -29,7 +28,7 @@ export interface CreateCollectionData {
   agree_to_terms: boolean;
   understand_irreversible_action: boolean;
   track_ip_addresses?: boolean;
-  first_party_data?: FirstPartyDatum[];
+  first_party_data?: string;
   create_contract: boolean;
 }
 
@@ -50,7 +49,7 @@ export interface CollectionInfo {
   agree_to_terms: boolean;
   understand_irreversible_action: boolean;
   track_ip_addresses: boolean;
-  first_party_data?: FirstPartyDatum[];
+  first_party_data?: FirstPartyDatum[] | string;
   created_at?: string;
   updated_at?: string;
 }

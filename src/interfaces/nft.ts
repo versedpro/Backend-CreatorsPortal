@@ -27,7 +27,7 @@ export interface NftItem {
   external_url?: string;
   description: string;
   name: string;
-  attributes?: Attribute[];
+  attributes?: Attribute[] | string;
   background_color?: string;
   animation_url?: string;
   youtube_url?: string;
