@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Attribute } from '../interfaces/nft';
-import { FirstPartyDatum } from '../interfaces/collection';
+import { FirstPartyDatum, FirstPartyDatumType } from '../interfaces/collection';
 import { StatusCodes } from 'http-status-codes';
 import * as ResponseManager from '../helpers/response.manager';
 
@@ -32,6 +32,13 @@ function findError(req: Request): string | undefined {
     }
   }
 
+  const firstPartyDataValidation = validateFirstPartyData(first_party_data);
+  if (firstPartyDataValidation) {
+    return firstPartyDataValidation;
+  }
+}
+
+export function validateFirstPartyData(first_party_data: string): string | undefined {
   if (first_party_data) {
     try {
       const parsedData = JSON.parse(first_party_data) as unknown as FirstPartyDatum[];
@@ -41,6 +48,9 @@ function findError(req: Request): string | undefined {
       for (const item of parsedData) {
         if (!item.type) {
           return 'first_party_data.*.type is required';
+        }
+        if ((item.type !== FirstPartyDatumType.EMAIL) && (!item.question)) {
+          return 'first_party_data.*.question is required for non EMAIL type';
         }
       }
     } catch (e) {

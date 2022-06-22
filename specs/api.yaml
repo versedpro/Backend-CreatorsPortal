@@ -500,12 +500,63 @@ paths:
       security:
         - ApiAuthKey: [ ]
       operationId: updateCollectionInfo
-      summary: Update collection info
+      summary: Update a deployed collection info
+      description: |
+        Update a deployed collection info
       requestBody:
         content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNftCollectionInfoRequest'
+          multipart/form-data: # Media type
+            encoding:
+              collection_image:
+                contentType: image/png, image/jpeg
+              collection_background_header:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 200
+                about:
+                  type: string
+                  minLength: 20
+                  maxLength: 1000
+                collection_image:
+                  type: string
+                  format: binary
+                collection_background_header:
+                  type: string
+                  format: binary
+                track_ip_addresses:
+                  type: string
+                first_party_data:
+                  description: |
+                    JSON stringified array of FirstPartyDatum object
+                    <br/>These are questions the organization would want to collect from minters.
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/FirstPartyDatum'
+                main_link:
+                  type: string
+                  format: uri
+                socail_links:
+                  description: |
+                    JSON stringified array of CollectionSocialLink object
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/CollectionSocialLink'
+                whitelist_host_addresses:
+                  description: |
+                    JSON stringified array of url strings
+                  type: string
+                  items:
+                    type: string
+                    format: uri
       responses:
         '200':
           description: Ok
@@ -537,45 +588,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetCollectionResponse'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                error: true
-                code: 403
-                message: An admin auth key is required
-
-  /organizations/{organization_id}/collections/{collection_id}/items:
-    parameters:
-      - name: organization_id
-        in: path
-        schema:
-          type: string
-          format: uuid
-        required: true
-      - name: collection_id
-        in: path
-        schema:
-          type: string
-          format: uuid
-        required: true
-    get:
-      tags:
-        - nft_collection
-      security:
-        - ApiAuthKey: [ ]
-      operationId: getCollectionNfts
-      summary: Get collection NFT items in a paginated query
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetNftsResponse'
         '403':
           description: Forbidden
           content:
@@ -677,12 +689,92 @@ paths:
                 error: true
                 code: 403
                 message: An admin auth key is required
+
+
+  /mint/{collection_id}/info:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    get:
+      tags:
+        - mint
+      security:
+        - PluginAuth: [ ]
+      operationId: getMintInfo
+      summary: Get mint info
+      description: |
+        This endpoint requires a Basic Authorization, i.eusername and password header authentication.
+        <br/>Use the api key as username.
+        <br/>Use the secret key as password.
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NftMintInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
+  /mint/{collection_id}/answers:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - mint
+      security:
+        - PluginAuth: [ ]
+      operationId: answerMintQuestions
+      summary: Answer mint questions
+      description: |
+        Only call this endpoint if the collection has first_party_data that the user has to answer. 
+        <br/>This endpoint requires a Basic Authorization, i.eusername and password header authentication.
+        <br/>Use the api key as username.
+        <br/>Use the secret key as password.
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMintRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
 components:
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: x-auth-token
+    PluginAuth:
+      type: http
+      scheme: basic
   schemas:
     GenericResponse:
       properties:
@@ -1177,3 +1269,87 @@ components:
       enum:
         - IN_PROGRESS
         - DEPLOYED
+
+    NftMintInfo:
+      type: object
+      required:
+        - chain
+        - name
+        - description
+        - about
+        - contract_address
+        - background_header
+      properties:
+        chain:
+          $ref: '#/components/schemas/SupportedChain'
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+        description:
+          type: string
+          minLength: 10
+          maxLength: 200
+        about:
+          type: string
+          minLength: 20
+          maxLength: 1000
+        contract_address:
+          type: string
+        image:
+          type: string
+          format: uri
+        background_header:
+          type: string
+          format: uri
+        first_party_data:
+          description: These are questions the organization would want to collect from minters.
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyDatum'
+
+    FirstPartyAnswers:
+      type: object
+      required:
+        - question_type
+        - quesstion
+        - answer
+      properties:
+        question_type:
+          $ref: '#/components/schemas/FirstPartyDatumType'
+        quesstion:
+          type: string
+          default: Email
+        answer:
+          type: string
+      example:
+        {
+          "question_type": "SHORT_TEXT",
+          "quesstion": "Name",
+          "answer": "Hashcode"
+        }
+
+    PostMintRequest:
+      type: object
+      required:
+        - wallet_address
+        - answers
+      properties:
+        wallet_address:
+          type: string
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyAnswers'
+
+    CollectionSocialLink:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+          default: false

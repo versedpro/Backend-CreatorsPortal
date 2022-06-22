@@ -11,7 +11,12 @@ import {
 } from '../interfaces/organization';
 import { Logger } from './Logger';
 import { Pagination } from '../interfaces/pagination';
-import { CollectionInfo, DbGetOrganizationCollectionsRequest, GetCollectionsResponse } from '../interfaces/collection';
+import {
+  CollectionInfo,
+  DbGetOrganizationCollectionsRequest,
+  DbUpdateCollectionData,
+  GetCollectionsResponse
+} from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 import { GetItemRequest } from '../interfaces/get.item.request';
@@ -151,7 +156,7 @@ export class KnexHelper {
     return knex(dbTables.nftCollections).insert(collection);
   }
 
-  static async updateNftCollection(collection: CollectionInfo): Promise<any> {
+  static async updateNftCollection(collection: CollectionInfo | DbUpdateCollectionData): Promise<any> {
     return knex(dbTables.nftCollections)
       .where({ id: collection.id })
       .update(collection);

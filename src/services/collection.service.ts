@@ -3,10 +3,12 @@ import * as OrgService from './organization.service';
 import {
   CollectionInfo,
   CreateCollectionRequest,
+  DbUpdateCollectionData,
   GetCollectionRequest,
   GetCollectionsResponse,
   GetOrganizationCollectionsRequest,
   NftCollectionStatus,
+  UpdateCollectionRequest,
   UploadImagesResult
 } from '../interfaces/collection';
 import { CustomError } from '../helpers';
@@ -259,6 +261,14 @@ export async function getCollectionByIdAndOrganization(body: GetCollectionReques
   return results[0];
 }
 
+export async function getCollectionById(id: string): Promise<CollectionInfo> {
+  const results = await KnexHelper.getNftCollectionByParams({ id });
+  if (results.length === 0) {
+    throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
+  }
+  return results[0];
+}
+
 export function generateCollectionWhereClause(request: GetOrganizationCollectionsRequest): { rawQuery: string, values: any[] } {
   const { organization_id, name, status, oldest_date } = request;
 
@@ -297,3 +307,44 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
     size: body.size,
   });
 }
+
+export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo[]> {
+  const { organizationId, collectionId, data, files } = request;
+
+  await getCollectionByIdAndOrganization({ organizationId, collectionId });
+
+  // find if organization exists
+  const organization = await OrgService.getOrganization({ id: organizationId });
+
+  const folder = `${organization.id}/${collectionId}`;
+
+  // upload images
+  Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);
+  if (files && (files.length > 2)) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload max of 2 files');
+  }
+
+  const { collectionImage, collectionBgHeader } = await uploadImages(folder, files);
+
+  // Create and save collection:
+  const collectionInfo: DbUpdateCollectionData = {
+    id: collectionId,
+    name: data.name,
+    description: data.description,
+    about: data.about,
+    first_party_data: data.first_party_data,
+    track_ip_addresses: data.track_ip_addresses === 'true',
+    // new ones
+    main_link: data.main_link,
+    social_links: data.social_links,
+    whitelist_host_addresses: data.whitelist_host_addresses,
+    // end of new ones
+    image: collectionImage,
+    background_header: collectionBgHeader,
+  };
+  // Update collection
+  await KnexHelper.updateNftCollection(collectionInfo);
+
+  return await KnexHelper.getNftCollection(collectionId);
+}
+

@@ -5,7 +5,7 @@ import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
-import { CreateCollectionData, NftCollectionStatus } from '../interfaces/collection';
+import { CreateCollectionData, NftCollectionStatus, UpdateCollectionData } from '../interfaces/collection';
 import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
 
@@ -105,7 +105,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     if (collectionArr.length < 1) {
       return Response.failure(res, {
-        message: 'An error occurred, Collection could no tbe created'
+        message: 'An error occurred, Collection could not be created'
       });
     }
 
@@ -151,6 +151,35 @@ export async function handleGetCollectionById(req: Request, res: ExpressResponse
     return Response.success(res, {
       message: 'Successful',
       response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleUpdateCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  Logger.Info('Update Collection request', req.body);
+  try {
+    const { organization_id: organizationId, collection_id: collectionId } = req.params;
+
+    const data = req.body as UpdateCollectionData;
+
+    const collectionArr = await collectionService.updateCollection({
+      organizationId,
+      collectionId,
+      data,
+      files: req.files as Express.Multer.File[],
+    });
+
+    if (collectionArr.length < 1) {
+      return Response.failure(res, {
+        message: 'An error occurred, Collection could not be updated'
+      });
+    }
+
+    return Response.success(res, {
+      message: 'Successful',
+      response: collectionArr[0],
     }, StatusCodes.OK);
   } catch (err: any) {
     return Response.handleError(res, err);

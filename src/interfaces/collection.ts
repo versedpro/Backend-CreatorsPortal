@@ -50,6 +50,9 @@ export interface CollectionInfo {
   understand_irreversible_action: boolean;
   track_ip_addresses: boolean;
   first_party_data?: FirstPartyDatum[] | string;
+  main_link?: string;
+  social_links?: CollectionSocialLink[] | string;
+  whitelist_host_addresses?: string[];
   created_at?: string;
   updated_at?: string;
 }
@@ -95,4 +98,42 @@ export interface DbGetOrganizationCollectionsRequest {
 export interface GetCollectionsResponse {
   pagination?: Pagination;
   items: CollectionInfo[];
+}
+
+export interface CollectionSocialLink {
+  name: string;
+  url: string;
+  enabled: boolean;
+}
+
+export interface UpdateCollectionData {
+  name?: string;
+  description?: string;
+  about?: string;
+  first_party_data?: string;
+  main_link?: string;
+  track_ip_addresses?: string;
+  social_links?: string;
+  whitelist_host_addresses?: string[];
+}
+
+export interface DbUpdateCollectionData {
+  id: string;
+  name?: string;
+  description?: string;
+  about?: string;
+  first_party_data?: string;
+  main_link?: string;
+  track_ip_addresses?: boolean;
+  social_links?: string;
+  whitelist_host_addresses?: string[];
+  image?: string;
+  background_header?: string;
+}
+
+export interface UpdateCollectionRequest {
+  organizationId: string,
+  collectionId: string,
+  data: UpdateCollectionData,
+  files: Express.Multer.File[];
 }
