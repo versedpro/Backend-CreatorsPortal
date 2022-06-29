@@ -6,7 +6,7 @@ import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
 
 const FACTORY_ABI = require('../abis/LunaFactory.json');
-const COLLECTION_ABI = require('../abis/LunaCollection.json');
+const COLLECTION_ABI = require('../abis/LunaCollectible.json');
 
 const credentials: ApiRelayerParams = {
   apiKey: <string>process.env.DEFENDER_API_KEY,
@@ -39,7 +39,8 @@ export async function deployNftCollection(body: DeployCollectionContractRequest)
 export async function addMaxSupply(body: AddMaxSupplyCallRequest): Promise<any> {
   const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
   try {
-    const tx = await collection.setMaxSupply(body.tokenId || 1, body.quantity);
+    Logger.Info('Making max supply call');
+    const tx = await collection.setMaxSupply(body.tokenId || 1, body.quantity, { gasLimit: 120000 });
     const minedTx = await tx.wait();
     Logger.Info('Completed max supply call', minedTx);
     return minedTx;

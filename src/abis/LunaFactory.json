@@ -1,5 +1,16 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_defender",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -63,6 +74,19 @@
     "type": "event"
   },
   {
+    "inputs": [],
+    "name": "defender",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -114,7 +138,7 @@
         "type": "uint256"
       }
     ],
-    "name": "getCountERC1155byIndex",
+    "name": "getCountERC1155byId",
     "outputs": [
       {
         "internalType": "uint256",
@@ -138,7 +162,7 @@
         "type": "uint256"
       }
     ],
-    "name": "getERC1155byIndexAndId",
+    "name": "getERC1155byIdAndId",
     "outputs": [
       {
         "internalType": "address",
@@ -159,6 +183,19 @@
         "internalType": "uint256",
         "name": "supply",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isPrivate",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -203,6 +240,32 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newDefender",
+        "type": "address"
+      }
+    ],
+    "name": "setDefender",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_isPrivate",
+        "type": "bool"
+      }
+    ],
+    "name": "setPrivate",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
