@@ -1115,7 +1115,7 @@ components:
           type: string
         token_uri:
           type: string
-        mint_voucher:
+        price:
           type: string
 
     NftCollectionInfo:
