@@ -4,7 +4,8 @@ import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
-import { NftCollectionStatus } from '../interfaces/collection';
+import { AnswerRequest, NftCollectionStatus } from '../interfaces/collection';
+import { IExpressRequest } from '../interfaces/i.express.request';
 
 export async function handleGetMintInfo(req: Request, res: ExpressResponse): Promise<void> {
   try {
@@ -33,6 +34,26 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
     };
 
     res.status(200).json(response);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handlePostAnswers(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const { collection_id: collectionId } = req.params;
+
+    const { wallet_address, answers } = req.body;
+    const body: AnswerRequest = {
+      collectionId,
+      walletAddress: wallet_address,
+      answers,
+    };
+
+    const result = await collectionService.saveAnsweredQuestions(body);
+    res.status(200).json({
+      answers: result,
+    });
   } catch (err: any) {
     return Response.handleError(res, err);
   }

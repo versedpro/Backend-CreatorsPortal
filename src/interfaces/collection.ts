@@ -137,3 +137,24 @@ export interface UpdateCollectionRequest {
   data: UpdateCollectionData,
   files: Express.Multer.File[];
 }
+
+export interface FirstPartyQuestionAnswer extends FirstPartyQuestionAnswerInsertData {
+  id: string;
+}
+
+export interface FirstPartyQuestionAnswerInsertData extends FirstPartyQuestionAnswerDatum {
+  collection_id: string;
+  wallet_address: string;
+}
+
+export interface FirstPartyQuestionAnswerDatum {
+  question_type: FirstPartyDatumType;
+  question?: string;
+  answer: string;
+}
+
+export interface AnswerRequest {
+  collectionId: string;
+  walletAddress: string;
+  answers: FirstPartyQuestionAnswerInsertData[];
+}

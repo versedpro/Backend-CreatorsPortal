@@ -690,7 +690,6 @@ paths:
                 code: 403
                 message: An admin auth key is required
 
-
   /mint/{collection_id}/info:
     parameters:
       - name: collection_id
@@ -736,6 +735,71 @@ paths:
           type: string
           format: uuid
         required: true
+    get:
+      tags:
+        - nft_collection
+      security:
+        - ApiAuthKey: [ ]
+      parameters:
+        - name: wallet_address
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: question_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/FirstPartyDatumType'
+          required: false
+        - name: question
+          in: query
+          description: filter by part or whole of the question
+          schema:
+            type: string
+          required: false
+        - name: oldest_date
+          in: query
+          description: For the date filter, e.g Last 30 days
+          schema:
+            type: number
+            format: int64
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+      operationId: getMintQuestionAnswers
+      summary: Get Mint Question Answers
+      description: |
+        Creator endpoint to get all answers to the mint questions.
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMintAnswersResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
     post:
       tags:
         - mint
@@ -748,13 +812,18 @@ paths:
         <br/>This endpoint requires a Basic Authorization, i.eusername and password header authentication.
         <br/>Use the api key as username.
         <br/>Use the secret key as password.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostMintRequest'
       responses:
         '200':
           description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PostMintRequest'
+                $ref: '#/components/schemas/PostMintAnswersResponse'
         '401':
           description: Unauthorized
           content:
@@ -1211,28 +1280,6 @@ components:
             data:
               $ref: '#/components/schemas/NftCollectionInfo'
 
-    UpdateNftCollectionInfoRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 30
-        description:
-          type: string
-          minLength: 10
-          maxLength: 200
-        about:
-          type: string
-          minLength: 20
-          maxLength: 1000
-        image:
-          type: string
-          format: uri
-        background_header:
-          type: string
-          format: uri
-
     GenerateApiKeysResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
@@ -1358,3 +1405,11 @@ components:
         enabled:
           type: boolean
           default: false
+
+    PostMintAnswersResponse:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyAnswers'

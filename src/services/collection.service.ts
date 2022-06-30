@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as OrgService from './organization.service';
 import {
+  AnswerRequest,
   CollectionInfo,
   CreateCollectionRequest,
-  DbUpdateCollectionData,
+  DbUpdateCollectionData, FirstPartyQuestionAnswer, FirstPartyQuestionAnswerInsertData,
   GetCollectionRequest,
   GetCollectionsResponse,
   GetOrganizationCollectionsRequest,
@@ -353,3 +354,18 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   return await KnexHelper.getNftCollection(collectionId);
 }
 
+export async function saveAnsweredQuestions(body: AnswerRequest): Promise<FirstPartyQuestionAnswer[]> {
+  const { collectionId, walletAddress, answers } = body;
+  const toBeSavedArr = answers.map(ans => {
+    const insertAns: FirstPartyQuestionAnswerInsertData = {
+      collection_id: collectionId,
+      wallet_address: walletAddress,
+      question_type: ans.question_type,
+      question: ans.question,
+      answer: ans.answer,
+    };
+    return insertAns;
+  });
+  const result = await KnexHelper.insertMintAnswers(toBeSavedArr);
+  return result as FirstPartyQuestionAnswer[];
+}

@@ -14,7 +14,7 @@ import { Pagination } from '../interfaces/pagination';
 import {
   CollectionInfo,
   DbGetOrganizationCollectionsRequest,
-  DbUpdateCollectionData,
+  DbUpdateCollectionData, FirstPartyQuestionAnswerInsertData,
   GetCollectionsResponse
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
@@ -263,7 +263,6 @@ export class KnexHelper {
     return undefined;
   }
 
-
   static async getCollections(request: DbGetOrganizationCollectionsRequest): Promise<GetCollectionsResponse> {
     const { page, size, rawQuery, values } = request;
 
@@ -289,6 +288,12 @@ export class KnexHelper {
     };
 
     return { pagination, items: allItems };
+  }
+
+  static async insertMintAnswers(data: FirstPartyQuestionAnswerInsertData[]): Promise<any> {
+    return knex(dbTables.firstPartyQuestionAnswers)
+      .insert(data)
+      .returning('*');
   }
 
 }

@@ -6,4 +6,6 @@ const router = express.Router({ mergeParams: true });
 
 router.get('/:collection_id/info', requirePluginAuth, controller.handleGetMintInfo);
 
+router.post('/:collection_id/answers', requirePluginAuth, controller.handlePostAnswers);
+
 export default router;
