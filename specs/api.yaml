@@ -1056,7 +1056,7 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/FirstPartyDatumType'
-        quesstion:
+        question:
           type: string
           default: Email
         is_required:
@@ -1315,12 +1315,12 @@ components:
       type: object
       required:
         - question_type
-        - quesstion
+        - question
         - answer
       properties:
         question_type:
           $ref: '#/components/schemas/FirstPartyDatumType'
-        quesstion:
+        question:
           type: string
           default: Email
         answer:
@@ -1328,7 +1328,7 @@ components:
       example:
         {
           "question_type": "SHORT_TEXT",
-          "quesstion": "Name",
+          "question": "Name",
           "answer": "Hashcode"
         }
 
