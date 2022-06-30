@@ -78,3 +78,16 @@ export interface AddMaxSupplyCallRequest {
   tokenId?: number;
   quantity: number;
 }
+
+export interface SetMintPriceCallRequest {
+  contractAddress: string;
+  tokenId?: number;
+  // price in eth
+  price: string;
+}
+
+export interface GetTokenBalanceCallRequest {
+  contractAddress: string;
+  tokenId?: number;
+}
+

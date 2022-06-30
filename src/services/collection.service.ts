@@ -133,13 +133,13 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
 
   const collections = await KnexHelper.getNftCollection(collectionId);
   if (data.create_contract) {
-    await callContract(collections[0], data.quantity);
+    await callContract(collections[0]);
     return await KnexHelper.getNftCollection(collectionId);
   }
   return collections;
 }
 
-async function callContract(collection: CollectionInfo, maxSupply?: number) {
+async function callContract(collection: CollectionInfo) {
   // 1. Get Collection and NFT info
   // 2. verify all data is present
   // 3. Call NFT Contract
@@ -172,13 +172,18 @@ async function callContract(collection: CollectionInfo, maxSupply?: number) {
       const contractParam = createdLog.data?.params?.find(x => x.name === 'tokenContract');
       if (contractParam && contractParam.value) {
         const contractAddress = JSON.parse(contractParam.value);
-        if (maxSupply) {
+        if (nftItem?.max_supply) {
           await ContractService.addMaxSupply({
             contractAddress,
             tokenId: 1,
-            quantity: maxSupply
+            quantity: nftItem.max_supply
           });
         }
+        await ContractService.setMintPrice({
+          contractAddress,
+          tokenId: 1,
+          price: nftItem!.price!.toString(),
+        });
         await KnexHelper.updateNftCollectionToDeployed(collection.id, contractAddress);
       }
     }

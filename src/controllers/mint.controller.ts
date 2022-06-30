@@ -28,7 +28,8 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
       contract_address: collection.contract_address,
       image: collection.image,
       background_header: collection.background_header,
-      first_party_data: collection.first_party_data
+      first_party_data: collection.first_party_data,
+      social_links: collection.social_links,
     };
 
     res.status(200).json(response);

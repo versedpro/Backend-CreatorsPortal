@@ -1,7 +1,11 @@
 import { ApiRelayerParams } from 'defender-relay-client/lib/relayer';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ethers } from 'ethers';
-import { AddMaxSupplyCallRequest, DeployCollectionContractRequest } from '../interfaces/contract';
+import { BigNumber, ethers } from 'ethers';
+import {
+  AddMaxSupplyCallRequest,
+  DeployCollectionContractRequest, GetTokenBalanceCallRequest,
+  SetMintPriceCallRequest
+} from '../interfaces/contract';
 import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
 
@@ -44,6 +48,45 @@ export async function addMaxSupply(body: AddMaxSupplyCallRequest): Promise<any> 
     const minedTx = await tx.wait();
     Logger.Info('Completed max supply call', minedTx);
     return minedTx;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function setMintPrice(body: SetMintPriceCallRequest): Promise<any> {
+  const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
+  try {
+    Logger.Info('Making set mint price call');
+    const tx = await collection.setMintPrice(body.tokenId || 1, ethers.utils.parseEther(body.price), { gasLimit: 120000 });
+    const minedTx = await tx.wait();
+    Logger.Info('Completed set mint price call', minedTx);
+    return minedTx;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getTokenBalance(body: GetTokenBalanceCallRequest): Promise<number | undefined> {
+  const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
+  try {
+    Logger.Info('Making getTokenBalance call');
+    let balance = await collection.balanceForTokenId(body.tokenId || 1);
+    balance = (balance as BigNumber).toNumber();
+    Logger.Info('Completed getTokenBalance: ', balance);
+    return balance;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getMaxSupply(body: GetTokenBalanceCallRequest): Promise<number | undefined> {
+  const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
+  try {
+    Logger.Info('Making maxSupply call');
+    let maxSupply = await collection.maxSupply(body.tokenId || 1);
+    maxSupply = (maxSupply as BigNumber).toNumber();
+    Logger.Info('Completed maxSupply: ', maxSupply);
+    return maxSupply;
   } catch (error) {
     console.log(error);
   }
