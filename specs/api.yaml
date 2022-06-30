@@ -544,7 +544,7 @@ paths:
                 main_link:
                   type: string
                   format: uri
-                socail_links:
+                social_links:
                   description: |
                     JSON stringified array of CollectionSocialLink object
                   type: string
