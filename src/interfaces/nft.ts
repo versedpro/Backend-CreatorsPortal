@@ -34,5 +34,5 @@ export interface NftItem {
   amount?: number;
   max_supply?: number;
   price?: number;
-  royalties?: number;
+  royalties?: string;
 }

@@ -91,3 +91,7 @@ export interface GetTokenBalanceCallRequest {
   tokenId?: number;
 }
 
+export interface SetRoyaltyRequest {
+  contractAddress: string;
+  royalty: number;
+}

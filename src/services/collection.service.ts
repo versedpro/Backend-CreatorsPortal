@@ -4,7 +4,9 @@ import {
   AnswerRequest,
   CollectionInfo,
   CreateCollectionRequest,
-  DbUpdateCollectionData, FirstPartyQuestionAnswer, FirstPartyQuestionAnswerInsertData,
+  DbUpdateCollectionData,
+  FirstPartyQuestionAnswer,
+  FirstPartyQuestionAnswerInsertData,
   GetCollectionRequest,
   GetCollectionsResponse,
   GetOrganizationCollectionsRequest,
@@ -124,7 +126,7 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
     attributes: data.attributes,
     max_supply: data.quantity,
     price: data.price,
-    royalties: data.royalties,
+    royalties: data.royalties.toString(),
   };
   if (itemsImages.length > 0) {
     nftMetadata.image = itemsImages[0];
@@ -173,17 +175,22 @@ async function callContract(collection: CollectionInfo) {
       const contractParam = createdLog.data?.params?.find(x => x.name === 'tokenContract');
       if (contractParam && contractParam.value) {
         const contractAddress = JSON.parse(contractParam.value);
+        // No need to await these calls, causing response to be slow
         if (nftItem?.max_supply) {
-          await ContractService.addMaxSupply({
+          ContractService.addMaxSupply({
             contractAddress,
             tokenId: 1,
             quantity: nftItem.max_supply
           });
         }
-        await ContractService.setMintPrice({
+        ContractService.setMintPrice({
           contractAddress,
           tokenId: 1,
           price: nftItem!.price!.toString(),
+        });
+        ContractService.setRoyalty({
+          contractAddress,
+          royalty: parseInt(nftItem.royalties || '0'),
         });
         await KnexHelper.updateNftCollectionToDeployed(collection.id, contractAddress);
       }

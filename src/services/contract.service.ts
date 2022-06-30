@@ -4,7 +4,7 @@ import { BigNumber, ethers } from 'ethers';
 import {
   AddMaxSupplyCallRequest,
   DeployCollectionContractRequest, GetTokenBalanceCallRequest,
-  SetMintPriceCallRequest
+  SetMintPriceCallRequest, SetRoyaltyRequest
 } from '../interfaces/contract';
 import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
@@ -60,6 +60,19 @@ export async function setMintPrice(body: SetMintPriceCallRequest): Promise<any> 
     const tx = await collection.setMintPrice(body.tokenId || 1, ethers.utils.parseEther(body.price), { gasLimit: 120000 });
     const minedTx = await tx.wait();
     Logger.Info('Completed set mint price call', minedTx);
+    return minedTx;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function setRoyalty(body: SetRoyaltyRequest): Promise<any> {
+  const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, signer);
+  try {
+    Logger.Info('Making set royalty call');
+    const tx = await collection.setRoyaltyPercent(body.royalty, { gasLimit: 120000 });
+    const minedTx = await tx.wait();
+    Logger.Info('Completed set royalty call', minedTx);
     return minedTx;
   } catch (error) {
     console.log(error);

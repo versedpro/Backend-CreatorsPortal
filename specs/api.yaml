@@ -1159,7 +1159,9 @@ components:
         royalties:
           type: integer
           format: int32
-          description: In percentage, e.g 7
+          minimum: 1
+          maximum: 100
+          description: percentage, e.g 7
         attributes:
           type: array
           items:
