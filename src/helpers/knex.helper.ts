@@ -141,6 +141,8 @@ export class KnexHelper {
       admin_email: org.admin_email,
       admin_name: org.admin_name,
       admin_wallet_address: org.admin_wallet_address,
+      image: org.image,
+      banner: org.banner,
     };
 
     await knex(dbTables.organizations)

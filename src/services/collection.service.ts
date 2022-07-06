@@ -22,24 +22,29 @@ import { Logger } from '../helpers/Logger';
 import { NftItem } from '../interfaces/nft';
 import * as ContractService from './contract.service';
 import { LogEvent } from '../interfaces/contract';
+import { UploadFilesData } from '../interfaces/organization';
 
-export async function uploadImages(folder: string, files: Express.Multer.File[]): Promise<UploadImagesResult> {
+export async function uploadImages(folder: string, files: UploadFilesData): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
   let collectionImage: string | undefined;
   let collectionBgHeader: string | undefined;
 
   let itemIndex = 1;
-  for (const file of files) {
-    if (file.fieldname === 'collection_image') {
-      collectionImage = await s3UploadSingle(file, folder, file.fieldname);
-    } else if (file.fieldname === 'collection_background_header') {
-      collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
-    } else {
-      const loc = await s3UploadSingle(file, folder, itemIndex.toString());
-      imageLocations.push(loc);
-      itemIndex++;
-    }
+  if (files['collection_image']) {
+    const file = files['collection_image'][0];
+    collectionImage = await s3UploadSingle(file, folder, file.fieldname);
   }
+  if (files['collection_background_header']) {
+    const file = files['collection_background_header'][0];
+    collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
+  }
+  if (files['image']) {
+    const file = files['image'][0];
+    const loc = await s3UploadSingle(file, folder, itemIndex.toString());
+    imageLocations.push(loc);
+    itemIndex++;
+  }
+
   return {
     collectionImage,
     collectionBgHeader,
@@ -70,9 +75,9 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   const folder = `${organization.id}/${collectionId}`;
 
   // upload images
-  Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);
+  Logger.Info('Number of files to be uploaded for collection', collectionId, files ? Object.keys(files).length : 0);
   if (data.create_contract && !data.collection_id) {
-    if (!files || (files.length != 3)) {
+    if (!files || (Object.keys(files).length != 3)) {
       throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload the 3 files');
     }
   }
@@ -324,6 +329,7 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
 export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo[]> {
   const { organizationId, collectionId, data, files } = request;
 
+  Logger.Info('files', files);
   await getCollectionByIdAndOrganization({ organizationId, collectionId });
 
   // find if organization exists
@@ -333,7 +339,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);
-  if (files && (files.length > 2)) {
+  if (files && (Object.keys(files).length > 2)) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload max of 2 files');
   }
 

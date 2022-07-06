@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import { awsConfig } from '../../constants';
 import { Logger } from '../Logger';
+import fs from 'fs';
 
 aws.config.update({
   secretAccessKey: awsConfig.secretAccessKey,
@@ -16,21 +17,21 @@ aws.config.update({
 const s3 = new aws.S3();
 
 
-export const s3UploadSingle = async (dataByte: Express.Multer.File, folder: string, name?: string): Promise<string> => {
-  const fileExtension = path.extname(dataByte.originalname);
+export const s3UploadSingle = async (file: Express.Multer.File, folder: string, name?: string): Promise<string> => {
+  const fileExtension = path.extname(file.originalname);
   name = name || `${Date.now().toString()}_${uuidv4()}`;
   const params = {
     Bucket: awsConfig.s3BucketName,
     ACL: 'public-read',
     Key: `${folder}/${name}${fileExtension}`, // File name you want to save as in S3
-    Body: dataByte.buffer,
-    ContentType: dataByte.mimetype,
+    Body: fs.createReadStream(file.path),
+    ContentType: file.mimetype,
   };
 
   // Uploading files to the bucket
   const data = await s3.upload(params).promise();
   console.log(`File uploaded successfully at ${data.Location}`);
-  // fileSystem.unlinkSync(dataByte.path);
+  fs.unlinkSync(file.path);
   return data.Location;
 };
 

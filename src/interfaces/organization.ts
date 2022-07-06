@@ -9,6 +9,8 @@ export interface UpdateOrganizationRequest {
   admin_email?: string;
   admin_name?: string;
   admin_wallet_address?: string;
+  image?: string;
+  banner?: string;
 }
 
 export interface OrganizationInfo {
@@ -21,6 +23,8 @@ export interface OrganizationInfo {
   admin_email?: string;
   admin_name?: string;
   admin_wallet_address?: string;
+  image?: string;
+  banner?: string;
 }
 
 export interface GetOrganizationInfoRequest {
@@ -38,4 +42,8 @@ export interface GetOrganizationsRequest {
 export interface GetOrganizationsResponse {
   pagination?: Pagination;
   items: OrganizationInfo[];
+}
+
+export interface UploadFilesData {
+  [fieldname: string]:Express.Multer.File[];
 }

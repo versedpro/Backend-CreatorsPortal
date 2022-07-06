@@ -16,7 +16,9 @@ const credentials: ApiRelayerParams = {
   apiKey: <string>process.env.DEFENDER_API_KEY,
   apiSecret: <string>process.env.DEFENDER_API_SECRET,
 };
+// @ts-ignore
 const provider = new DefenderRelayProvider(credentials);
+// @ts-ignore
 const signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
 
 export async function deployNftCollection(body: DeployCollectionContractRequest): Promise<any> {

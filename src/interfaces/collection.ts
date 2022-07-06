@@ -1,4 +1,5 @@
 import { Pagination } from './pagination';
+import { UploadFilesData } from './organization';
 
 export enum FirstPartyDatumType {
   SHORT_TEXT = 'SHORT_TEXT',
@@ -60,7 +61,7 @@ export interface CollectionInfo {
 export interface CreateCollectionRequest {
   organizationId: string,
   data: CreateCollectionData,
-  files: Express.Multer.File[];
+  files: UploadFilesData;
 }
 
 export interface UploadImagesResult {
@@ -135,7 +136,7 @@ export interface UpdateCollectionRequest {
   organizationId: string,
   collectionId: string,
   data: UpdateCollectionData,
-  files: Express.Multer.File[];
+  files: UploadFilesData;
 }
 
 export interface FirstPartyQuestionAnswer extends FirstPartyQuestionAnswerInsertData {

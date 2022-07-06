@@ -8,6 +8,8 @@ import { IExpressRequest } from '../interfaces/i.express.request';
 import { CreateCollectionData, NftCollectionStatus, UpdateCollectionData } from '../interfaces/collection';
 import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
+import { UploadFilesData } from '../interfaces/organization';
+import { cleanupFiles } from '../handlers/file.cleanup.handler';
 
 export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   Logger.Info('Create Collection request', req.body);
@@ -100,7 +102,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     const collectionArr = await collectionService.addCollection({
       organizationId,
       data,
-      files: req.files as Express.Multer.File[],
+      files: req.files as UploadFilesData,
     });
 
     if (collectionArr.length < 1) {
@@ -114,6 +116,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       response: collectionArr[0],
     }, StatusCodes.OK);
   } catch (err: any) {
+    await cleanupFiles(req);
     return Response.handleError(res, err);
   }
 }
@@ -168,7 +171,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
       organizationId,
       collectionId,
       data,
-      files: req.files as Express.Multer.File[],
+      files: req.files as UploadFilesData,
     });
 
     if (collectionArr.length < 1) {
@@ -182,6 +185,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
       response: collectionArr[0],
     }, StatusCodes.OK);
   } catch (err: any) {
+    await cleanupFiles(req);
     return Response.handleError(res, err);
   }
 }

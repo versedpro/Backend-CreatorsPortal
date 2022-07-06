@@ -157,9 +157,48 @@ paths:
       summary: Add Organization
       requestBody:
         content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateOrganizationRequest'
+          multipart/form-data: # Media type
+            encoding:
+              image:
+                contentType: image/png, image/jpeg
+              banner:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                type:
+                  $ref: '#/components/schemas/OrganizationType'
+                website:
+                  type: string
+                  format: uri
+                twitter:
+                  type: string
+                  format: uri
+                discord:
+                  type: string
+                  format: uri
+                admin_email:
+                  type: string
+                  format: email
+                admin_name:
+                  type: string
+                admin_wallet_address:
+                  type: string
+                  pattern: (\b0x[a-fA-F0-9]{40}\b)
+                image:
+                  type: string
+                  format: binary
+                banner:
+                  type: string
+                  format: binary
+
       responses:
         '200':
           description: Ok
@@ -254,8 +293,13 @@ paths:
       summary: Update organization info
       requestBody:
         content:
-          application/json:
-            schema:
+          multipart/form-data: # Media type
+            encoding:
+              image:
+                contentType: image/png, image/jpeg
+              banner:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
               $ref: '#/components/schemas/UpdateOrganizationRequest'
       responses:
         '200':
@@ -1003,6 +1047,12 @@ components:
         admin_wallet_address:
           type: string
           pattern: (\b0x[a-fA-F0-9]{40}\b)
+        image:
+          type: string
+          format: binary
+        banner:
+          type: string
+          format: binary
 
     UpdateOrganizationRequest:
       type: object
@@ -1030,6 +1080,12 @@ components:
         admin_wallet_address:
           type: string
           pattern: (\b0x[a-fA-F0-9]{40}\b)
+        image:
+          type: string
+          format: binary
+        banner:
+          type: string
+          format: binary
 
     OrganizationInfo:
       type: object
@@ -1066,6 +1122,12 @@ components:
         updated_at:
           type: string
           format: 'date-time'
+        image:
+          type: string
+          format: uri
+        banner:
+          type: string
+          format: uri
 
     UpdateOrganizationResponse:
       allOf:

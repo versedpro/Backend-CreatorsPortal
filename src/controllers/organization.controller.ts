@@ -2,19 +2,24 @@ import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as orgService from '../services/organization.service';
 import { StatusCodes } from 'http-status-codes';
-import { UpdateOrganizationRequest } from '../interfaces/organization';
+import { UpdateOrganizationRequest, UploadFilesData } from '../interfaces/organization';
 import { Logger } from '../helpers/Logger';
+import { cleanupFiles } from '../handlers/file.cleanup.handler';
 
 export async function handleAddOrganization(req: Request, res: ExpressResponse): Promise<void> {
   Logger.Info('Create Organization request', req.body);
   try {
-    const organization = await orgService.addOrganization(req.body as UpdateOrganizationRequest);
+    const organization = await orgService.addOrganization(
+      req.body as UpdateOrganizationRequest,
+      req.files as UploadFilesData,
+    );
 
     return Response.success(res, {
       message: 'Successful',
       response: organization,
     }, StatusCodes.OK);
   } catch (err: any) {
+    await cleanupFiles(req);
     return Response.handleError(res, err);
   }
 }
@@ -56,14 +61,18 @@ export async function handleGetOrganizations(req: Request, res: ExpressResponse)
 export async function handleUpdateOrganization(req: Request, res: ExpressResponse): Promise<void> {
   try {
     const { organization_id } = req.params;
-
-    const organization = await orgService.updateOrganization( organization_id, req.body  as UpdateOrganizationRequest);
+    const organization = await orgService.updateOrganization(
+      organization_id,
+      req.body as UpdateOrganizationRequest,
+      req.files as UploadFilesData,
+    );
 
     return Response.success(res, {
       message: 'Successful',
       response: organization,
     }, StatusCodes.OK);
   } catch (err: any) {
+    await cleanupFiles(req);
     return Response.handleError(res, err);
   }
 }
