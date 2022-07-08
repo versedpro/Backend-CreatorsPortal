@@ -1,6 +1,6 @@
 export interface DeployCollectionContractRequest {
-  tokenName: string;
-  tokenSymbol: string;
+  collectionName: string;
+  collectionSymbol: string;
   metadataUriPrefix: string;
   royaltyAddress: string;
   payoutAddress: string;

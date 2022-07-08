@@ -120,7 +120,6 @@ export interface UpdateCollectionData {
 
 export interface DbUpdateCollectionData {
   id: string;
-  name?: string;
   description?: string;
   about?: string;
   first_party_data?: string;

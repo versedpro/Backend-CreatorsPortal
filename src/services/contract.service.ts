@@ -26,8 +26,8 @@ export async function deployNftCollection(body: DeployCollectionContractRequest)
 
   try {
     const tx = await factory.deployERC1155(
-      body.tokenName,
-      body.tokenSymbol,
+      body.collectionName,
+      body.collectionSymbol,
       body.metadataUriPrefix,
       body.royaltyAddress,
       body.payoutAddress,

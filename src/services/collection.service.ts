@@ -167,8 +167,8 @@ async function callContract(collection: CollectionInfo) {
     throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${collectionErrors},${itemErrors}`);
   }
   const txReceipt = await ContractService.deployNftCollection({
-    tokenName: nftItem.name,
-    tokenSymbol: nftItem.name.substring(0, 3).toUpperCase(),
+    collectionName: collection.name,
+    collectionSymbol: collection.name.substring(0, 3).toUpperCase(),
     metadataUriPrefix: `${process.env.API_BASE_URL}/nft/${collection.id}/metadata/`,
     royaltyAddress: collection.royalty_address!,
     payoutAddress: collection.payout_address!,
@@ -348,7 +348,6 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   // Create and save collection:
   const collectionInfo: DbUpdateCollectionData = {
     id: collectionId,
-    name: data.name,
     description: data.description,
     about: data.about,
     first_party_data: data.first_party_data,
