@@ -2,6 +2,7 @@ import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as adminService from '../services/admin.service';
 import { StatusCodes } from 'http-status-codes';
+import { UploadFilesData } from '../interfaces/organization';
 
 export async function handleAddAdmin(req: Request, res: ExpressResponse): Promise<void> {
   try {
@@ -36,7 +37,7 @@ export async function handleUpdateAdmin(req: Request, res: ExpressResponse): Pro
     const { public_address } = req.params;
     const { username } = req.body;
 
-    const admin = await adminService.updateAdmin({ public_address, username });
+    const admin = await adminService.updateAdmin({ public_address, username, files: req.files as UploadFilesData, });
 
     return Response.success(res, {
       message: 'Successful',

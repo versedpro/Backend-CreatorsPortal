@@ -85,8 +85,11 @@ paths:
       summary: Update Admin username
       requestBody:
         content:
-          application/json:
-            schema:
+          multipart/form-data: # Media type
+            encoding:
+              image:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
               $ref: '#/components/schemas/UpdateAdminRequest'
       responses:
         '200':
@@ -946,6 +949,8 @@ components:
           type: string
         nonce:
           type: number
+        image:
+          type: string
         created_at:
           type: string
           format: 'date-time'
@@ -978,6 +983,9 @@ components:
           type: string
           minLength: 3
           maxLength: 30
+        image:
+          type: string
+          format: binary
 
     AuthRequest:
       type: object

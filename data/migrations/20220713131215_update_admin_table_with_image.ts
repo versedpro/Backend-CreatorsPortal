@@ -3,15 +3,13 @@ import { dbTables } from '../constants';
 
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(dbTables.organizations, table => {
+  await knex.schema.alterTable(dbTables.admins, table => {
     table.string('image').nullable();
-    table.string('banner').nullable();
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(dbTables.organizations, table => {
+  await knex.schema.alterTable(dbTables.admins, table => {
     table.dropColumn('image');
-    table.dropColumn('banner');
   });
 }

@@ -18,7 +18,6 @@ export const signupAdminValidator = () => {
 
 export const updateAdminValidator = () => {
   return Validator.validate([
-
     param('public_address', 'public_address is required')
       .exists()
       .trim()
@@ -29,6 +28,7 @@ export const updateAdminValidator = () => {
       .isIn(ADMIN_ADDRESSES)
       .bail(),
     body('username', 'username is required')
+      .optional()
       .trim()
       .isLength({ min: 3, max: 50 })
       .bail(),

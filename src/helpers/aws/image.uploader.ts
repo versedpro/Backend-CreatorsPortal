@@ -35,7 +35,7 @@ export const s3UploadSingle = async (file: Express.Multer.File, folder: string, 
   return data.Location;
 };
 
-const s3DeleteEach = async (fileUrl: string) => {
+export const s3DeleteSingle = async (fileUrl: string) => {
   // Uploading files to the bucket
   const fileUrlSplit = fileUrl.toString().split('/');
   const params = {
@@ -63,7 +63,7 @@ export const uploadToS3 = async (folder: string, files: any[]): Promise<Map<stri
 
 export const deleteMultipleFromS3 = async (fileUrls: string[]) => {
   for (const url of fileUrls) {
-    await s3DeleteEach(url);
+    await s3DeleteSingle(url);
   }
 };
 

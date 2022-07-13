@@ -14,10 +14,14 @@ export const ApiValidator = OpenApiValidator.middleware({
   validateSecurity: false,
   ignoreUndocumented: false,
   ignorePaths: (path: string) => {
+    console.log(path);
     if (path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
     }
     const split = path.trim().split('/');
+    if (split.length === 5 && split[1] === 'api' && split[3] === 'admin' && split[4].match(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))) {
+      return true;
+    }
     const lastPath = split[split.length - 1];
     return (lastPath === 'organizations') || (lastPath === 'collections') || (lastPath.match(uuidV4RegExp) !== null);
   },
