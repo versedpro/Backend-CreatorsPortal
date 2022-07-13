@@ -942,6 +942,11 @@ components:
 
     AdminData:
       type: object
+      required:
+        - public_address
+        - nonce
+        - created_at
+        - updated_at
       properties:
         public_address:
           type: string
@@ -961,6 +966,7 @@ components:
         public_address: publicAddress
         username: lekky
         nonce: 345056
+        image: 'https://luna-creators-portal-test.s3.amazonaws.com/admin_profile_pics/0x22a8cd3a7a07527b3447eb42db073342b36c1d49_593e1818-7f7d-4f90-bb47-22a0d022ed5f.png'
         created_at: '2022-05-25T13:38:57.920Z'
         updated_at: '2022-05-25T13:38:57.920Z'
 
