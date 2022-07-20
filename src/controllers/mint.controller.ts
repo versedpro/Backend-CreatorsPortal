@@ -1,17 +1,23 @@
-// noinspection ExceptionCaughtLocallyJS
-
 import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
 import { AnswerRequest, NftCollectionStatus } from '../interfaces/collection';
 import { IExpressRequest } from '../interfaces/i.express.request';
+import * as CacheHelper from '../helpers/cache.helper';
 
 export async function handleGetMintInfo(req: Request, res: ExpressResponse): Promise<void> {
   try {
     const { collection_id: collectionId } = req.params;
     const { organization_id: organizationId, } = req.query;
 
+    const cacheKey = `mint_info_${collectionId}`;
+    // Check if cached, the goal is to reduce DB queries to get faster responses.
+    const cachedResponse = await CacheHelper.get(cacheKey);
+    if (cachedResponse) {
+      res.status(200).json(cachedResponse);
+      return;
+    }
     const collection = await collectionService.getCollectionByIdAndOrganization({
       organizationId: <string>organizationId,
       collectionId
@@ -32,7 +38,8 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
       first_party_data: collection.first_party_data,
       social_links: collection.social_links,
     };
-
+    // cache response for 10 minutes
+    await CacheHelper.set(cacheKey, response, 600);
     res.status(200).json(response);
   } catch (err: any) {
     return Response.handleError(res, err);

@@ -14,7 +14,6 @@ export const ApiValidator = OpenApiValidator.middleware({
   validateSecurity: false,
   ignoreUndocumented: false,
   ignorePaths: (path: string) => {
-    console.log(path);
     if (path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
     }
