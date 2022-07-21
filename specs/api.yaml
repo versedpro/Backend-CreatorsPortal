@@ -600,6 +600,9 @@ paths:
                   items:
                     type: string
                     format: uri
+                checkout_background_color:
+                  description: Color for checkout plugin background
+                  type: string
       responses:
         '200':
           description: Ok
@@ -1309,6 +1312,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FirstPartyDatum'
+        checkout_background_color:
+          description: Color for checkout plugin background
+          type: string
         created_at:
           type: string
           format: 'date-time'
@@ -1431,6 +1437,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CollectionSocialLink'
+        checkout_background_color:
+          description: Color for checkout plugin background
+          type: string
 
     FirstPartyAnswers:
       type: object
