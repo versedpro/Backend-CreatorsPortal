@@ -359,6 +359,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
     // end of new ones
     image: collectionImage,
     background_header: collectionBgHeader,
+    checkout_background_color: data.checkout_background_color,
   };
   // Update collection
   await KnexHelper.updateNftCollection(collectionInfo);

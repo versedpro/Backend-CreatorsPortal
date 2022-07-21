@@ -9,15 +9,19 @@ import * as CollectionService from '../services/collection.service';
 import { Logger } from './Logger';
 
 export async function requirePluginAuth(req: IExpressRequest, res: Response, next: NextFunction) {
-  const { authorized, reason } = await checkAuthorization(req);
-  if (authorized) {
-    return next();
+  try {
+    const { authorized, reason } = await checkAuthorization(req);
+    if (authorized) {
+      return next();
+    }
+    // Access denied...
+    res.set('WWW-Authenticate', 'Basic realm="401"');
+    return ResponseManager.failure(res, {
+      message: reason || 'Authentication required.',
+    }, StatusCodes.UNAUTHORIZED);
+  } catch (err: any) {
+    return ResponseManager.handleError(res, err);
   }
-  // Access denied...
-  res.set('WWW-Authenticate', 'Basic realm="401"');
-  return ResponseManager.failure(res, {
-    message: reason || 'Authentication required.',
-  }, StatusCodes.UNAUTHORIZED);
 }
 
 

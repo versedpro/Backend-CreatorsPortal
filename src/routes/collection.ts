@@ -8,6 +8,7 @@ import {
   getCollectionExpValidator
 } from '../middlewares/create.collection.exp.validator';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
+import { updateCollectionExpValidator } from '../middlewares/update.collection.exp.validator';
 
 const router = express.Router({ mergeParams: true });
 
@@ -33,6 +34,7 @@ router.put('/:collection_id',
     { name: 'collection_background_header', maxCount: 1 },
   ]),
   cleanUpMulterFiles,
+  updateCollectionExpValidator(),
   updateCollectionValidator, controller.handleUpdateCollection);
 
 export default router;

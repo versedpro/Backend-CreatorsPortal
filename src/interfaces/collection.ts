@@ -54,6 +54,7 @@ export interface CollectionInfo {
   main_link?: string;
   social_links?: CollectionSocialLink[] | string;
   whitelist_host_addresses?: string[];
+  checkout_background_color?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -115,6 +116,7 @@ export interface UpdateCollectionData {
   main_link?: string;
   track_ip_addresses?: string;
   social_links?: string;
+  checkout_background_color?: string;
   whitelist_host_addresses?: string[];
 }
 
@@ -129,6 +131,7 @@ export interface DbUpdateCollectionData {
   whitelist_host_addresses?: string[];
   image?: string;
   background_header?: string;
+  checkout_background_color?: string;
 }
 
 export interface UpdateCollectionRequest {
