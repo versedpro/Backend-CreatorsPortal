@@ -13,11 +13,6 @@ export const updateCollectionExpValidator = () => {
       .trim()
       .isLength({ min: 20, max: 1000 })
       .bail(),
-    body('collection_about')
-      .optional()
-      .trim()
-      .isLength({ min: 20, max: 1000 })
-      .bail(),
     body('track_ip_addresses')
       .optional()
       .trim()
