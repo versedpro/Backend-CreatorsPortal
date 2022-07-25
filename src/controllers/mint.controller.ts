@@ -37,6 +37,7 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
       background_header: collection.background_header,
       first_party_data: collection.first_party_data,
       social_links: collection.social_links,
+      checkout_background_color: collection.checkout_background_color,
     };
     // cache response for 10 minutes
     await CacheHelper.set(cacheKey, response, 600);
