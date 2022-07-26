@@ -19,7 +19,7 @@ export const updateCollectionExpValidator = () => {
       .default('false')
       .bail(),
     body('main_link')
-      .optional()
+      .optional({ nullable: true })
       .trim()
       .isURL()
       .bail(),

@@ -10,7 +10,7 @@ export enum FirstPartyDatumType {
 export interface FirstPartyDatum {
   type: FirstPartyDatumType;
   question?: string;
-  required?: boolean;
+  is_required?: boolean;
 }
 
 export interface CreateCollectionData {
