@@ -28,5 +28,30 @@ export const updateCollectionExpValidator = () => {
       .trim()
       .isHexColor()
       .bail(),
+    body('checkout_font', 'FONT CAN ONLY BE SERIF OR SANS_SERIF')
+      .optional()
+      .trim()
+      .isIn(['SERIF', 'SANS_SERIF'])
+      .bail(),
+    body('checkout_font_size')
+      .optional()
+      .trim()
+      .isInt({ min: 1 })
+      .bail(),
+    body('checkout_font_color')
+      .optional()
+      .trim()
+      .isHexColor()
+      .bail(),
+    body('terms_and_condition_enabled')
+      .optional()
+      .trim()
+      .isBoolean({ loose: true })
+      .bail(),
+    body('terms_and_condition_link')
+      .optional({ nullable: true })
+      .trim()
+      .isURL()
+      .bail(),
   ]);
 };

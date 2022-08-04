@@ -360,6 +360,13 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
     image: collectionImage,
     background_header: collectionBgHeader,
     checkout_background_color: data.checkout_background_color,
+
+    // plugin UI updates
+    checkout_font: data.checkout_font,
+    checkout_font_size: data.checkout_font_size,
+    checkout_font_color: data.checkout_font_color,
+    terms_and_condition_enabled: data.terms_and_condition_enabled,
+    terms_and_condition_link: data.terms_and_condition_link,
   };
   // Update collection
   await KnexHelper.updateNftCollection(collectionInfo);

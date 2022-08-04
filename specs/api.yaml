@@ -603,6 +603,28 @@ paths:
                 checkout_background_color:
                   description: Color for checkout plugin background
                   type: string
+                checkout_font:
+                  description: Font for checkout plugin texts
+                  type: string
+                  enum:
+                    - SERIF
+                    - SANS_SERIFF
+                checkout_font_size:
+                  description: Integer font size for checkout plugin texts
+                  type: string
+                checkout_font_color:
+                  description: Hex Color for checkout plugin texts
+                  type: string
+                terms_and_condition_enabled:
+                  description: Booelan Option to display T&C on checkout plugin
+                  type: string
+                  enum:
+                    - true
+                    - false
+                terms_and_condition_link:
+                  description: Link to T&C
+                  type: string
+                  format: uri
       responses:
         '200':
           description: Ok
@@ -1315,6 +1337,28 @@ components:
         checkout_background_color:
           description: Color for checkout plugin background
           type: string
+        checkout_font:
+          description: Font for checkout plugin texts
+          type: string
+          enum:
+            - SERIF
+            - SANS_SERIFF
+        checkout_font_size:
+          description: Integer font size for checkout plugin texts
+          type: string
+        checkout_font_color:
+          description: Hex Color for checkout plugin texts
+          type: string
+        terms_and_condition_enabled:
+          description: Booelan Option to display T&C on checkout plugin
+          type: string
+          enum:
+            - true
+            - false
+        terms_and_condition_link:
+          description: Link to T&C
+          type: string
+          format: uri
         created_at:
           type: string
           format: 'date-time'
@@ -1440,6 +1484,28 @@ components:
         checkout_background_color:
           description: Color for checkout plugin background
           type: string
+        checkout_font:
+          description: Font for checkout plugin texts
+          type: string
+          enum:
+            - SERIF
+            - SANS_SERIF
+        checkout_font_size:
+          description: Integer font size for checkout plugin texts
+          type: string
+        checkout_font_color:
+          description: Hex Color for checkout plugin texts
+          type: string
+        terms_and_condition_enabled:
+          description: Booelan Option to display T&C on checkout plugin
+          type: string
+          enum:
+            - true
+            - false
+        terms_and_condition_link:
+          description: Link to T&C
+          type: string
+          format: uri
 
     FirstPartyAnswers:
       type: object

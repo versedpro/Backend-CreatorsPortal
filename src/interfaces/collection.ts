@@ -55,6 +55,11 @@ export interface CollectionInfo {
   social_links?: CollectionSocialLink[] | string;
   whitelist_host_addresses?: string[];
   checkout_background_color?: string;
+  checkout_font?: string;
+  checkout_font_size?: string;
+  checkout_font_color?: string;
+  terms_and_condition_enabled?: string;
+  terms_and_condition_link?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -118,6 +123,11 @@ export interface UpdateCollectionData {
   social_links?: string;
   checkout_background_color?: string;
   whitelist_host_addresses?: string[];
+  checkout_font?: string;
+  checkout_font_size?: string;
+  checkout_font_color?: string;
+  terms_and_condition_enabled?: string;
+  terms_and_condition_link?: string;
 }
 
 export interface DbUpdateCollectionData {
@@ -132,6 +142,11 @@ export interface DbUpdateCollectionData {
   image?: string;
   background_header?: string;
   checkout_background_color?: string;
+  checkout_font?: string;
+  checkout_font_size?: string;
+  checkout_font_color?: string;
+  terms_and_condition_enabled?: string;
+  terms_and_condition_link?: string;
 }
 
 export interface UpdateCollectionRequest {

@@ -38,6 +38,11 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
       first_party_data: collection.first_party_data,
       social_links: collection.social_links,
       checkout_background_color: collection.checkout_background_color,
+      checkout_font: collection.checkout_font,
+      checkout_font_size: collection.checkout_font_size,
+      checkout_font_color: collection.checkout_font_color,
+      terms_and_condition_enabled: collection.terms_and_condition_enabled,
+      terms_and_condition_link: collection.terms_and_condition_link,
     };
     // cache response for 10 minutes
     await CacheHelper.set(cacheKey, response, 600);

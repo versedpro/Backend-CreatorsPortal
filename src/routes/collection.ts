@@ -35,6 +35,8 @@ router.put('/:collection_id',
   ]),
   cleanUpMulterFiles,
   updateCollectionExpValidator(),
-  updateCollectionValidator, controller.handleUpdateCollection);
+  updateCollectionValidator,
+  controller.handleUpdateCollection
+);
 
 export default router;
