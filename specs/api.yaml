@@ -606,9 +606,6 @@ paths:
                 checkout_font:
                   description: Font for checkout plugin texts
                   type: string
-                  enum:
-                    - SERIF
-                    - SANS_SERIFF
                 checkout_font_size:
                   description: Integer font size for checkout plugin texts
                   type: string
@@ -1340,9 +1337,6 @@ components:
         checkout_font:
           description: Font for checkout plugin texts
           type: string
-          enum:
-            - SERIF
-            - SANS_SERIFF
         checkout_font_size:
           description: Integer font size for checkout plugin texts
           type: string
@@ -1487,9 +1481,6 @@ components:
         checkout_font:
           description: Font for checkout plugin texts
           type: string
-          enum:
-            - SERIF
-            - SANS_SERIF
         checkout_font_size:
           description: Integer font size for checkout plugin texts
           type: string

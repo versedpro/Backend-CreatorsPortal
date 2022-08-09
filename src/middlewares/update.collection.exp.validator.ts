@@ -28,10 +28,9 @@ export const updateCollectionExpValidator = () => {
       .trim()
       .isHexColor()
       .bail(),
-    body('checkout_font', 'FONT CAN ONLY BE SERIF OR SANS_SERIF')
+    body('checkout_font')
       .optional()
       .trim()
-      .isIn(['SERIF', 'SANS_SERIF'])
       .bail(),
     body('checkout_font_size')
       .optional()
