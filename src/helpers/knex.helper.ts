@@ -14,8 +14,10 @@ import { Pagination } from '../interfaces/pagination';
 import {
   CollectionInfo,
   DbGetOrganizationCollectionsRequest,
-  DbUpdateCollectionData, FirstPartyQuestionAnswerInsertData,
-  GetCollectionsResponse
+  DbUpdateCollectionData,
+  FirstPartyQuestionAnswerInsertData,
+  GetCollectionsResponse,
+  UpdateCollectionContractStatus
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
@@ -164,10 +166,22 @@ export class KnexHelper {
       .update(collection);
   }
 
-  static async updateNftCollectionToDeployed(collectionId: string, contractAddress: string): Promise<any> {
+  static async updateNftCollectionToDeployed(collectionId: string): Promise<any> {
     return knex(dbTables.nftCollections)
       .where({ id: collectionId })
-      .update({ status: 'DEPLOYED', contract_address: contractAddress });
+      .update({ status: 'DEPLOYED' });
+  }
+
+  static async updateNftCollectionMethodCallStatus(collectionId: string, body: UpdateCollectionContractStatus): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collectionId })
+      .update(body);
+  }
+
+  static async updateNftCollectionAddress(collectionId: string, contractAddress: string): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collectionId })
+      .update({ contract_address: contractAddress });
   }
 
   static async getAllNftCollections(): Promise<CollectionInfo[]> {

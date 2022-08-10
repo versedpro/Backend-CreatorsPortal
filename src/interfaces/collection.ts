@@ -60,6 +60,9 @@ export interface CollectionInfo {
   checkout_font_color?: string;
   terms_and_condition_enabled?: string;
   terms_and_condition_link?: string;
+  max_supply_set: boolean;
+  mint_price_set: boolean;
+  royalty_address_set: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -175,4 +178,11 @@ export interface AnswerRequest {
   collectionId: string;
   walletAddress: string;
   answers: FirstPartyQuestionAnswerInsertData[];
+}
+
+export interface UpdateCollectionContractStatus {
+  status?: string;
+  max_supply_set: boolean;
+  mint_price_set: boolean;
+  royalty_address_set: boolean;
 }

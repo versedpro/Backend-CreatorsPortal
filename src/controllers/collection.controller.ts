@@ -62,7 +62,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     if (data.create_contract) {
       // Validate all params
-      if (!['ethereum'].includes(chain)) {
+      if (!['ethereum', 'polygon'].includes(chain)) {
         errors.push('Supported chain is required');
       }
       if (!price) {
