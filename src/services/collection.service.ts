@@ -189,8 +189,9 @@ async function callContract(collection: CollectionInfo) {
 
           const contractAddress = JSON.parse(contractParam.value);
           await KnexHelper.updateNftCollectionAddress(collection.id, contractAddress);
+          await KnexHelper.updateNftCollectionToDeployed(collection.id);
           // No need to await these calls, causing response to be slow
-          await updateCollectionContract(contractAddress, collection, nftItem);
+          updateCollectionContract(contractAddress, collection, nftItem);
         }
       }
     }
