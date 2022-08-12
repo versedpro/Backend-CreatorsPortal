@@ -69,12 +69,7 @@ export const createCollectionExpValidator = () => {
     body('collection_about')
       .optional()
       .trim()
-      .isLength({ min: 20, max: 1000 })
-      .bail(),
-    body('collection_about')
-      .optional()
-      .trim()
-      .isLength({ min: 20, max: 1000 })
+      .isLength({ min: 10, max: 1000 })
       .bail(),
     body('agree_to_terms')
       .optional()
