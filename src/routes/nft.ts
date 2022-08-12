@@ -6,6 +6,6 @@ const router = express.Router();
 const ENDPOINT = '/:collection_id/metadata';
 
 // Get metadata for a collection item
-router.get(`${ENDPOINT}/:token_id`, controller.handleGetMetadata);
+router.get([`${ENDPOINT}/:token_id.json`, `${ENDPOINT}/:token_id`], controller.handleGetMetadata);
 
 export default router;
