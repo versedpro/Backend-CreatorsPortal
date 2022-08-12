@@ -14,3 +14,7 @@ export async function set(key: string, value: any, ttl = 100): Promise<boolean> 
 export async function get(key: string): Promise<any | undefined> {
   return nodeCache.get(key);
 }
+
+export async function del(key: string): Promise<number> {
+  return nodeCache.del(key);
+}

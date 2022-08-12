@@ -23,6 +23,7 @@ import { NftItem } from '../interfaces/nft';
 import { LogEvent } from '../interfaces/contract';
 import { UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
+import * as CacheHelper from '../helpers/cache.helper';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -408,7 +409,8 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   };
   // Update collection
   await KnexHelper.updateNftCollection(collectionInfo);
-
+  const cacheKey = `mint_info_${collectionId}`;
+  await CacheHelper.del(cacheKey);
   return await KnexHelper.getNftCollection(collectionId);
 }
 
