@@ -24,20 +24,23 @@ import { LogEvent } from '../interfaces/contract';
 import { UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
 
-export async function uploadImages(folder: string, files: UploadFilesData): Promise<UploadImagesResult> {
+export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
   let collectionImage: string | undefined;
   let collectionBgHeader: string | undefined;
 
   let itemIndex = 1;
-  if (files['collection_image']) {
-    const file = files['collection_image'][0];
-    collectionImage = await s3UploadSingle(file, folder, file.fieldname);
+  if (!onlyNftImage) {
+    if (files['collection_image']) {
+      const file = files['collection_image'][0];
+      collectionImage = await s3UploadSingle(file, folder, file.fieldname);
+    }
+    if (files['collection_background_header']) {
+      const file = files['collection_background_header'][0];
+      collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
+    }
   }
-  if (files['collection_background_header']) {
-    const file = files['collection_background_header'][0];
-    collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
-  }
+
   if (files['image']) {
     const file = files['image'][0];
     const loc = await s3UploadSingle(file, folder, itemIndex.toString());
@@ -77,8 +80,8 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files ? Object.keys(files).length : 0);
   if (data.create_contract && !data.collection_id) {
-    if (!files || (Object.keys(files).length != 3)) {
-      throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload the 3 files');
+    if (!files || (Object.keys(files).length != 1)) {
+      throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload the file');
     }
   }
   const { collectionImage, collectionBgHeader, itemsImages } = await uploadImages(folder, files);
@@ -91,7 +94,7 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
     name: data.collection_name,
     description: data.collection_description,
     about: data.collection_about,
-    image: collectionImage,
+    image: collectionImage || itemsImages[0],
     background_header: collectionBgHeader,
     agree_to_terms: data.agree_to_terms,
     understand_irreversible_action: data.understand_irreversible_action,
@@ -241,7 +244,7 @@ async function updateCollectionContract(contractAddress: string, collection: Col
 function verifyCollectionReady(col: CollectionInfo): string {
   const errors: string[] = [];
   const {
-    chain, name, description, about, image, background_header, agree_to_terms,
+    chain, name, description, about, agree_to_terms,
     understand_irreversible_action, royalty_address, payout_address,
   } = col;
   if (!chain) {
@@ -262,12 +265,12 @@ function verifyCollectionReady(col: CollectionInfo): string {
   if (!about) {
     errors.push('collection_about is required');
   }
-  if (!image) {
-    errors.push('collection_image is required');
-  }
-  if (!background_header) {
-    errors.push('collection_background_header is required');
-  }
+  // if (!image) {
+  //   errors.push('collection_image is required');
+  // }
+  // if (!background_header) {
+  //   errors.push('collection_background_header is required');
+  // }
   if (!agree_to_terms) {
     errors.push('agree_to_terms is required');
   }
@@ -378,7 +381,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload max of 2 files');
   }
 
-  const { collectionImage, collectionBgHeader } = await uploadImages(folder, files);
+  const { collectionImage, collectionBgHeader } = await uploadImages(folder, files, false);
 
   // Create and save collection:
   const collectionInfo: DbUpdateCollectionData = {
