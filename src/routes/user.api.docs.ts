@@ -7,9 +7,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Luna Creators Portal API Docs',
+      title: 'Luna Creators Portal User API Docs',
       version: '1.0.0',
-      description: '',
+      description: 'Base path is /api/users',
     },
   },
   // swaggerDefinition,

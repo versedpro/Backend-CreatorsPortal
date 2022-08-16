@@ -27,6 +27,7 @@ import {
   OrganizationKey,
   UpdateOrganizationKeyStatusData
 } from '../interfaces/OrganizationKey';
+import { UpdateUserDbRequest, UserInfo } from '../interfaces/user';
 
 export class KnexHelper {
   /*
@@ -312,4 +313,21 @@ export class KnexHelper {
       .returning('*');
   }
 
+  static async getUser(public_address: string): Promise<UserInfo | undefined> {
+    const result = await knex(dbTables.users).select().where({ public_address: public_address.toLowerCase() });
+    if(result.length > 0) {
+      return result[0];
+    }
+  }
+
+  static async updateUser(public_address: string, body: UpdateUserDbRequest): Promise<boolean> {
+    // Always have a new Nonce
+    if (!body.nonce) {
+      body.nonce = Math.floor(Math.random() * 1000000);
+    }
+    await knex(dbTables.users)
+      .where({ public_address })
+      .update(body);
+    return true;
+  }
 }
