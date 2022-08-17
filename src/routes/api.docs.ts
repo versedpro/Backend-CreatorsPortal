@@ -1,22 +1,26 @@
 import express from 'express';
-import swaggerUi from 'swagger-ui-express';
-import swaggerJSDoc from 'swagger-jsdoc';
+import { serve, setup } from 'swagger-ui-express';
+
 const router = express.Router();
 
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Luna Creators Portal API Docs',
-      version: '1.0.0',
-      description: 'Base path for API endpoints is /api',
-    },
-  },
-  // swaggerDefinition,
-  apis: ['./specs/api.yaml'],
+const swaggerUiOptions = {
+  explorer: true,
+  swaggerOptions: {
+    urls: [
+      {
+        url: '../specs/api.yaml',
+        name: 'General'
+      },
+      {
+        url: '../specs/user-creator.yaml',
+        name: 'User'
+      }
+    ]
+  }
 };
 
-router.use('/', swaggerUi.serve, swaggerUi.setup(swaggerJSDoc(options)));
+// @ts-ignore
+router.use('/', serve, setup(null, swaggerUiOptions));
 
 
 export default router;

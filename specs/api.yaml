@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
-  title: luna-creators-portal
+  title: Luna Creators Portal API Docs
   description: 'basePath is /api'
   version: 1.0.0
 servers:
-  - url: https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api
+  - url: 'https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api'
 tags:
   - name: admin
   - name: auth
@@ -156,7 +156,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: addOrganization
       summary: Add Organization
       requestBody:
@@ -224,7 +224,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: getOrganizationsInfo
       summary: Get all organizations info
       parameters:
@@ -292,7 +292,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: updateOrganization
       summary: Update organization info
       requestBody:
@@ -326,7 +326,7 @@ paths:
       tags:
         - organization
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: getOrganization
       summary: Get organization
       responses:
@@ -359,7 +359,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: createNftCollection
       summary: Create NFT collection for organization
       description: |
@@ -452,7 +452,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       parameters:
         - name: name
           in: query
@@ -524,7 +524,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: updateCollectionInfo
       summary: Update a deployed collection info
       description: |
@@ -622,7 +622,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       operationId: getCollectionInfo
       summary: Get collection info
       responses:
@@ -726,7 +726,7 @@ paths:
       tags:
         - nft_collection
       security:
-        - ApiAuthKey: [ ]
+        - ApiKeyAuth: [ ]
       parameters:
         - name: wallet_address
           in: query
@@ -1372,11 +1372,10 @@ components:
         answer:
           type: string
       example:
-        {
-          "question_type": "SHORT_TEXT",
-          "question": "Name",
-          "answer": "Hashcode"
-        }
+        "question_type": "SHORT_TEXT"
+        "question": "Name"
+        "answer": "Hashcode"
+
 
     PostMintRequest:
       type: object
@@ -1394,7 +1393,9 @@ components:
     CollectionSocialLink:
       type: object
       example:
-        { "name": "twitter","url": "https://www.twitter.com/@my_username","enabled": true }
+        "name": "twitter"
+        "url": "https://www.twitter.com/@my_username"
+        "enabled": true
       properties:
         name:
           type: string
