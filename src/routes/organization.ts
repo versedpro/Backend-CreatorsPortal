@@ -27,9 +27,4 @@ router.put(
   controller.handleUpdateOrganization,
 );
 
-// Update username for an organization
-router.get('/:organization_id/keys', controller.handleGetOrganizationKeys);
-
-router.post('/:organization_id/keys', controller.handleGenerateOrganizationKeys);
-
 export default router;

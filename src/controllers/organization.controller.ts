@@ -76,33 +76,3 @@ export async function handleUpdateOrganization(req: Request, res: ExpressRespons
     return Response.handleError(res, err);
   }
 }
-
-export async function handleGenerateOrganizationKeys(req: Request, res: ExpressResponse): Promise<void> {
-  try {
-    const { organization_id } = req.params;
-
-    const response = await orgService.generateOrganizationKeys(organization_id);
-
-    return Response.success(res, {
-      message: 'Successfully generated new keys',
-      response,
-    }, StatusCodes.OK);
-  } catch (err: any) {
-    return Response.handleError(res, err);
-  }
-}
-
-export async function handleGetOrganizationKeys(req: Request, res: ExpressResponse): Promise<void> {
-  try {
-    const { organization_id } = req.params;
-
-    const response = await orgService.getActiveOrganizationKeys(organization_id);
-
-    return Response.success(res, {
-      message: 'Successfully returned keys',
-      response,
-    }, StatusCodes.OK);
-  } catch (err: any) {
-    return Response.handleError(res, err);
-  }
-}

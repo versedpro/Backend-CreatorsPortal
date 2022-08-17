@@ -277,11 +277,19 @@ export async function getCollectionByIdAndOrganization(body: GetCollectionReques
 }
 
 export async function getCollectionById(id: string): Promise<CollectionInfo> {
+  const cacheKey = `Collection_Data_${id}`;
+  let collection = await CacheHelper.get(cacheKey);
+  if (collection) {
+    return collection;
+  }
   const results = await KnexHelper.getNftCollectionByParams({ id });
   if (results.length === 0) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
   }
-  return results[0];
+  collection = results[0];
+  // Cache for 30 minutes
+  await CacheHelper.set(cacheKey, collection, 1800);
+  return collection;
 }
 
 export function generateCollectionWhereClause(request: GetOrganizationCollectionsRequest): { rawQuery: string, values: any[] } {
@@ -369,6 +377,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   await KnexHelper.updateNftCollection(collectionInfo);
   const cacheKey = `mint_info_${collectionId}`;
   await CacheHelper.del(cacheKey);
+  await CacheHelper.del(`Collection_Data_${collectionId}`);
   return await KnexHelper.getNftCollection(collectionId);
 }
 

@@ -9,7 +9,6 @@ import * as CacheHelper from '../helpers/cache.helper';
 export async function handleGetMintInfo(req: Request, res: ExpressResponse): Promise<void> {
   try {
     const { collection_id: collectionId } = req.params;
-    const { organization_id: organizationId, } = req.query;
 
     const cacheKey = `mint_info_${collectionId}`;
     // Check if cached, the goal is to reduce DB queries to get faster responses.
@@ -18,10 +17,7 @@ export async function handleGetMintInfo(req: Request, res: ExpressResponse): Pro
       res.status(200).json(cachedResponse);
       return;
     }
-    const collection = await collectionService.getCollectionByIdAndOrganization({
-      organizationId: <string>organizationId,
-      collectionId
-    });
+    const collection = await collectionService.getCollectionById(collectionId);
     if (collection.status !== NftCollectionStatus.DEPLOYED) {
       return Response.failure(res, {
         message: 'Collection is yet to be deployed.',

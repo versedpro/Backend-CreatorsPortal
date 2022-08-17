@@ -21,11 +21,6 @@ import {
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 import { GetItemRequest } from '../interfaces/get.item.request';
-import {
-  InsertOrganizationKeyData,
-  OrganizationKey,
-  UpdateOrganizationKeyStatusData
-} from '../interfaces/OrganizationKey';
 import { UpdateUserDbRequest, UserInfo } from '../interfaces/user';
 
 export class KnexHelper {
@@ -244,27 +239,6 @@ export class KnexHelper {
       });
     });
     return result as NftItem[];
-  }
-
-  static async insertOrganizationKey(data: InsertOrganizationKeyData): Promise<OrganizationKey> {
-    return knex(dbTables.apiSecretKeys).insert(data);
-  }
-
-  static async updateOrganizationKeyStatus(body: UpdateOrganizationKeyStatusData): Promise<any> {
-    return knex(dbTables.apiSecretKeys)
-      .where({ organization_id: body.organizationId })
-      .update({ status: body.status });
-  }
-
-  static async getActiveOrganizationKey(organizationId: string): Promise<OrganizationKey | undefined> {
-    const result = await knex(dbTables.apiSecretKeys).select().where({
-      organization_id: organizationId,
-      status: 'ACTIVE',
-    }).limit(1);
-    if (result.length > 0) {
-      return result[0] as OrganizationKey;
-    }
-    return undefined;
   }
 
   static async getCollections(request: DbGetOrganizationCollectionsRequest): Promise<GetCollectionsResponse> {
