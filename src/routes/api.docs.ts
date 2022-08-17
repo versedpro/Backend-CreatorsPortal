@@ -9,11 +9,11 @@ const options = {
     info: {
       title: 'Luna Creators Portal API Docs',
       version: '1.0.0',
-      description: '',
+      description: 'Base path for API endpoints is /api',
     },
   },
   // swaggerDefinition,
-  apis: ['./specs/user-creator.yaml'],
+  apis: ['./specs/api.yaml'],
 };
 
 router.use('/', swaggerUi.serve, swaggerUi.setup(swaggerJSDoc(options)));

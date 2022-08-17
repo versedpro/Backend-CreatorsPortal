@@ -9,7 +9,7 @@ const options = {
     info: {
       title: 'Luna Creators Portal User API Docs',
       version: '1.0.0',
-      description: 'Base path is /api/users',
+      description: 'Base path for user API endpoints is /api/users',
     },
   },
   // swaggerDefinition,
