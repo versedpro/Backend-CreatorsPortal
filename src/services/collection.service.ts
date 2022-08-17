@@ -104,9 +104,6 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
     royalties: data.royalties,
     royalty_address: data.royalty_address,
     payout_address: data.payout_address,
-    max_supply_set: false,
-    mint_price_set: false,
-    royalty_address_set: false,
   };
 
   if (data.collection_id) {
@@ -174,15 +171,17 @@ async function callContract(collection: CollectionInfo) {
     throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${collectionErrors},${itemErrors}`);
   }
   const contractService = ContractServiceRegistry.getService(collection.chain);
-  if (collection.contract_address) {
-    updateCollectionContract(collection.contract_address, collection, nftItem);
-  } else {
+  if (!collection.contract_address) {
     const txReceipt = await contractService.deployNftCollection({
       collectionName: collection.name,
       collectionSymbol: collection.name.substring(0, 3).toUpperCase(),
       metadataUriPrefix: `${process.env.API_BASE_URL}/nft/${collection.id}/metadata/`,
       royaltyAddress: collection.royalty_address!,
       payoutAddress: collection.payout_address!,
+      tokenId: 1,
+      quantity: nftItem.max_supply,
+      price: nftItem!.price!.toString(),
+      royalty: parseInt(nftItem.royalties || '0'),
     });
 
     if (txReceipt && txReceipt.transactionHash) {
@@ -190,56 +189,15 @@ async function callContract(collection: CollectionInfo) {
       if (createdLog) {
         const contractParam = createdLog.data?.params?.find(x => x.name === 'tokenContract');
         if (contractParam && contractParam.value) {
-
           const contractAddress = JSON.parse(contractParam.value);
           await KnexHelper.updateNftCollectionAddress(collection.id, contractAddress);
-          await KnexHelper.updateNftCollectionToDeployed(collection.id);
+          // await KnexHelper.updateNftCollectionToDeployed(collection.id);
           // No need to await these calls, causing response to be slow
-          updateCollectionContract(contractAddress, collection, nftItem);
+          // updateCollectionContract(contractAddress, collection, nftItem);
         }
       }
     }
   }
-}
-
-async function updateCollectionContract(contractAddress: string, collection: CollectionInfo, nftItem: NftItem) {
-  const contractService = ContractServiceRegistry.getService(collection.chain);
-
-  if (nftItem?.max_supply && !collection.max_supply_set) {
-    const setMaxSupplyTx = await contractService.addMaxSupply({
-      contractAddress,
-      tokenId: 1,
-      quantity: nftItem.max_supply
-    });
-    collection.max_supply_set = !!setMaxSupplyTx;
-  } else {
-    // no need to set on Blockchain since there is none
-    collection.max_supply_set = true;
-  }
-
-  if (!collection.mint_price_set) {
-    const setMintPriceTx = await contractService.setMintPrice({
-      contractAddress,
-      tokenId: 1,
-      price: nftItem!.price!.toString(),
-    });
-    collection.mint_price_set = !!setMintPriceTx;
-  }
-
-  if (!collection.royalty_address_set) {
-    const setRoyaltyTx = await contractService.setRoyalty({
-      contractAddress,
-      royalty: parseInt(nftItem.royalties || '0'),
-    });
-    collection.royalty_address_set = !!setRoyaltyTx;
-  }
-
-  await KnexHelper.updateNftCollectionMethodCallStatus(collection.id!, {
-    status: (collection.max_supply_set && collection.mint_price_set && collection.royalty_address_set) ? 'DEPLOYED' : 'IN_PROGRESS',
-    max_supply_set: collection.max_supply_set,
-    mint_price_set: collection.mint_price_set,
-    royalty_address_set: collection.royalty_address_set,
-  });
 }
 
 function verifyCollectionReady(col: CollectionInfo): string {

@@ -36,6 +36,11 @@ export class ContractService {
         body.metadataUriPrefix,
         body.royaltyAddress,
         body.payoutAddress,
+        body.tokenId,
+        ethers.utils.parseEther(body.price),
+        body.quantity || ethers.constants.MaxInt256,
+        body.royalty,
+        { gasLimit: 5000000 },
       );
 
       const minedTx = await tx.wait();

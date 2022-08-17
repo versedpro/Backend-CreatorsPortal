@@ -16,8 +16,7 @@ import {
   DbGetOrganizationCollectionsRequest,
   DbUpdateCollectionData,
   FirstPartyQuestionAnswerInsertData,
-  GetCollectionsResponse,
-  UpdateCollectionContractStatus
+  GetCollectionsResponse
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
@@ -167,22 +166,10 @@ export class KnexHelper {
       .update(collection);
   }
 
-  static async updateNftCollectionToDeployed(collectionId: string): Promise<any> {
-    return knex(dbTables.nftCollections)
-      .where({ id: collectionId })
-      .update({ status: 'DEPLOYED' });
-  }
-
-  static async updateNftCollectionMethodCallStatus(collectionId: string, body: UpdateCollectionContractStatus): Promise<any> {
-    return knex(dbTables.nftCollections)
-      .where({ id: collectionId })
-      .update(body);
-  }
-
   static async updateNftCollectionAddress(collectionId: string, contractAddress: string): Promise<any> {
     return knex(dbTables.nftCollections)
       .where({ id: collectionId })
-      .update({ contract_address: contractAddress });
+      .update({ status: 'DEPLOYED', contract_address: contractAddress });
   }
 
   static async getAllNftCollections(): Promise<CollectionInfo[]> {
@@ -315,7 +302,7 @@ export class KnexHelper {
 
   static async getUser(public_address: string): Promise<UserInfo | undefined> {
     const result = await knex(dbTables.users).select().where({ public_address: public_address.toLowerCase() });
-    if(result.length > 0) {
+    if (result.length > 0) {
       return result[0];
     }
   }

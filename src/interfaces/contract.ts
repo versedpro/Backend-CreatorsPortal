@@ -4,6 +4,10 @@ export interface DeployCollectionContractRequest {
   metadataUriPrefix: string;
   royaltyAddress: string;
   payoutAddress: string;
+  tokenId?: number;
+  quantity?: number;
+  price: string;
+  royalty: number;
 }
 
 export interface AbiInputComponentParam {
