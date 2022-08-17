@@ -1,4 +1,5 @@
 import { Admin } from './admin';
+import { UserInfo } from './user';
 
 export interface JwtConfig {
   publicKey: string;
@@ -23,6 +24,6 @@ export interface GenerateAuthRequest {
 
 export interface AuthResponse {
   token: string;
-  user: Admin;
+  user: Admin | UserInfo;
   roleType?: RoleType,
 }

@@ -8,6 +8,7 @@ import organizationRoutes from './organization';
 import collectionRoutes from './collection';
 import nftRoutes from './nft';
 import mintRoutes from './mint';
+import userRoutes from './user';
 
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
@@ -24,6 +25,7 @@ router.use('/organizations/:organization_id/collections', jwtHelper.requirePermi
 router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organizationRoutes);
 router.use('/nft', nftRoutes);
 router.use('/mint', mintRoutes);
+router.use('/users', userRoutes);
 
 router.use(routeError);
 

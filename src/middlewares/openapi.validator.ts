@@ -14,6 +14,9 @@ export const ApiValidator = OpenApiValidator.middleware({
   validateSecurity: false,
   ignoreUndocumented: false,
   ignorePaths: (path: string) => {
+    if(path.startsWith('/api//users')) {
+      return true;
+    }
     if (path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
     }

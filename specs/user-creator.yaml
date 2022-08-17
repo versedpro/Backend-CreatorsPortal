@@ -1,0 +1,714 @@
+openapi: 3.0.0
+info:
+  title: luna-creators-portal
+  description: 'basePath is /users'
+  version: 1.0.0
+servers:
+  - url: https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api
+tags:
+  - name: user
+  - name: nft_collection
+
+paths:
+  /{public_address}:
+    parameters:
+      - name: public_address
+        in: path
+        schema:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+        required: true
+    post:
+      tags:
+        - user
+      summary: Signup User
+      operationId: signUpUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpUserRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpUserResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+    get:
+      tags:
+        - user
+      summary: Get full User info
+      operationId: GetUser
+      security:
+        - ApiAuthKey: [ ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 404
+                message: User was not found
+    put:
+      tags:
+        - user
+      summary: Update User data
+      requestBody:
+        content:
+          multipart/form-data: # Media type
+            encoding:
+              image:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpUserResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+  /{public_address}/signing-info:
+    parameters:
+      - name: public_address
+        in: path
+        schema:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+        required: true
+    get:
+      tags:
+        - user
+      summary: Get user nonce for signing
+      operationId: GetUserSigningInfo
+      security:
+        - ApiAuthKey: [ ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserSigningInfoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 404
+                message: User was not found
+
+  /me/collections:
+    post:
+      tags:
+        - nft_collection
+      security:
+        - ApiAuthKey: [ ]
+      operationId: createNftCollection
+      summary: Create NFT collection for user
+      description: |
+        Set create_contract to false if you want to save progress and finish later.
+        name and collection_name are always required
+      requestBody:
+        content:
+          multipart/form-data: # Media type
+            encoding:
+              image:
+                contentType: image/png, image/jpeg, image/gif
+            schema: # Request payload
+              type: object
+              required:
+                - name
+                - collection_name
+              properties:
+                chain:
+                  $ref: '#/components/schemas/SupportedChain'
+                collection_id:
+                  type: string
+                  format: uuid
+                  description: If continuation, specify the collection_id
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                quantity:
+                  type: string
+                  format: int32
+                price:
+                  type: string
+                  format: double
+                image:
+                  type: string
+                  format: binary
+                royalties:
+                  type: string
+                  format: int32
+                  description: In percentage, e.g 7
+                  maximum: 100
+                royalty_address:
+                  type: string
+                  pattern: (\b0x[a-fA-F0-9]{40}\b)
+                payout_address:
+                  type: string
+                  pattern: (\b0x[a-fA-F0-9]{40}\b)
+                attributes:
+                  type: string
+                  description: |
+                    JSON stringified array of NftAttribute object
+                  items:
+                    $ref: '#/components/schemas/NftAttribute'
+                agree_to_terms:
+                  type: string
+                  default: false
+                understand_irreversible_action:
+                  type: string
+                track_ip_addresses:
+                  type: string
+                  default: false
+                create_contract:
+                  type: string
+                  default: true
+                first_party_data:
+                  description: |
+                    JSON stringified array of FirstPartyDatum object
+                    <br/>These are questions the user would want to collect from minters.
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/FirstPartyDatum'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollectionResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+    get:
+      tags:
+        - nft_collection
+      security:
+        - ApiAuthKey: [ ]
+      parameters:
+        - name: name
+          in: query
+          description: Search part or whole of the collection name
+          schema:
+            type: string
+          required: false
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/NftCollectionStatus'
+          required: false
+        - name: oldest_date
+          in: query
+          description: For the date filter, e.g Last 30 days
+          schema:
+            type: number
+            format: int64
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+      operationId: getUserCollections
+      summary: Get all user collections
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllCollectionsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /me/collections/{collection_id}:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    put:
+      tags:
+        - nft_collection
+      security:
+        - ApiAuthKey: [ ]
+      operationId: updateCollectionInfo
+      summary: Update a deployed collection info
+      description: |
+        Update a deployed collection info
+      requestBody:
+        content:
+          multipart/form-data: # Media type
+            encoding:
+              collection_image:
+                contentType: image/png, image/jpeg
+            schema: # Request payload
+              type: object
+              properties:
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 200
+                about:
+                  type: string
+                  minLength: 20
+                  maxLength: 1000
+                collection_image:
+                  type: string
+                  format: binary
+                track_ip_addresses:
+                  type: string
+                first_party_data:
+                  description: |
+                    JSON stringified array of FirstPartyDatum object
+                    <br/>These are questions the user would want to collect from minters.
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/FirstPartyDatum'
+                main_link:
+                  type: string
+                  format: uri
+                social_links:
+                  description: |
+                    JSON stringified array of CollectionSocialLink object
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/CollectionSocialLink'
+                whitelist_host_addresses:
+                  description: |
+                    JSON stringified array of url strings
+                  type: string
+                  items:
+                    type: string
+                    format: uri
+                checkout_background_color:
+                  description: Color for checkout plugin background
+                  type: string
+                checkout_font:
+                  description: Font for checkout plugin texts
+                  type: string
+                checkout_font_size:
+                  description: Integer font size for checkout plugin texts
+                  type: string
+                checkout_font_color:
+                  description: Hex Color for checkout plugin texts
+                  type: string
+                terms_and_condition_enabled:
+                  description: Booelan Option to display T&C on checkout plugin
+                  type: string
+                  enum:
+                    - true
+                    - false
+                terms_and_condition_link:
+                  description: Link to T&C
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollectionResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+    get:
+      tags:
+        - nft_collection
+      security:
+        - ApiAuthKey: [ ]
+      operationId: getCollectionInfo
+      summary: Get collection info
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollectionResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An user auth key is required
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-auth-token
+  responses:
+    ErrorResponse401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            error: true
+            code: 401
+            message: Authentication required.
+
+  schemas:
+    GenericResponse:
+      properties:
+        error:
+          type: boolean
+          example: false
+        code:
+          type: number
+          example: 200
+        message:
+          type: string
+          example: Successful
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          description: First page is page 1, default size if not specified is 50.
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        last_page:
+          description: Last possible page
+          type: integer
+          format: int32
+        total_count:
+          type: integer
+          format: int32
+      example:
+        page: 1
+        size: 50
+        last_page: 5
+        total_count: 241
+
+    SignUpUserRequest:
+      type: object
+      required:
+        - public_address
+      properties:
+        public_address:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+
+    SignUpUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserData'
+
+    UserData:
+      type: object
+      required:
+        - public_address
+        - nonce
+        - created_at
+        - updated_at
+      properties:
+        public_address:
+          type: string
+        nonce:
+          type: number
+        username:
+          type: string
+        image:
+          type: string
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        discord:
+          type: string
+          format: uri
+        facebook:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
+
+    GetUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserData'
+
+    GetUserSigningInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required:
+                - public_address
+                - nonce
+                - created_at
+                - updated_at
+              properties:
+                public_address:
+                  type: string
+                nonce:
+                  type: number
+                created_at:
+                  type: string
+                  format: 'date-time'
+                updated_at:
+                  type: string
+                  format: 'date-time'
+
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        image:
+          type: string
+          format: binary
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        discord:
+          type: string
+          format: uri
+        facebook:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+
+    SupportedChain:
+      type: string
+      enum:
+        - ethereum
+        - polygon
+
+    NftAttribute:
+      type: object
+      required:
+        - trait_type
+      properties:
+        trait_type:
+          type: string
+        display_type:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+
+    FirstPartyDatumType:
+      type: string
+      enum:
+        - SHORT_TEXT
+        - LONG_TEXT
+        - EMAIL
+
+    FirstPartyDatum:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/FirstPartyDatumType'
+        question:
+          type: string
+          default: Email
+        is_required:
+          type: boolean
+          default: false
+
+    TokenFormat:
+      type: string
+      enum:
+        - ERC1155
+
+    NftCollectionInfo:
+      type: object
+      required:
+        - chain
+        - name
+        - description
+        - about
+        - agree_to_terms
+        - understand_irreversible_action
+      properties:
+        chain:
+          $ref: '#/components/schemas/SupportedChain'
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+        description:
+          type: string
+          minLength: 10
+          maxLength: 200
+        about:
+          type: string
+          minLength: 20
+          maxLength: 1000
+        royalty_address:
+          type: string
+        payout_address:
+          type: string
+        contract_address:
+          type: string
+        image:
+          type: string
+          format: uri
+        status:
+          $ref: '#/components/schemas/NftCollectionStatus'
+        agree_to_terms:
+          type: boolean
+        understand_irreversible_action:
+          type: boolean
+        track_ip_addresses:
+          type: boolean
+          default: false
+        first_party_data:
+          description: These are questions the user would want to collect from minters.
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyDatum'
+        checkout_background_color:
+          description: Color for checkout plugin background
+          type: string
+        checkout_font:
+          description: Font for checkout plugin texts
+          type: string
+        checkout_font_size:
+          description: Integer font size for checkout plugin texts
+          type: string
+        checkout_font_color:
+          description: Hex Color for checkout plugin texts
+          type: string
+        terms_and_condition_enabled:
+          description: Booelan Option to display T&C on checkout plugin
+          type: string
+          enum:
+            - true
+            - false
+        terms_and_condition_link:
+          description: Link to T&C
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
+
+    GetAllCollectionsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NftCollectionInfo'
+
+    GetCollectionResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/NftCollectionInfo'
+
+    NftCollectionStatus:
+      type: string
+      enum:
+        - DRAFT
+        - DEPLOYMENT_IN_PROGRESS
+        - DEPLOYED
+        - DEPLOYMENT_FAILED
+
+    CollectionSocialLink:
+      type: object
+      example:
+        { "name": "twitter","url": "https://www.twitter.com/@my_username","enabled": true }
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+          default: false
