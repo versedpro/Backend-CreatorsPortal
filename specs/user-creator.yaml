@@ -198,7 +198,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetCollectionResponse'
+                $ref: '#/components/schemas/GetUserCollectionResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
     get:
@@ -247,7 +247,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetAllCollectionsResponse'
+                $ref: '#/components/schemas/GetAllUserCollectionsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
@@ -341,7 +341,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetCollectionResponse'
+                $ref: '#/components/schemas/GetUserCollectionResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
     get:
@@ -357,7 +357,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetCollectionResponse'
+                $ref: '#/components/schemas/GetUserCollectionResponse'
         '403':
           description: Forbidden
           content:
@@ -514,7 +514,6 @@ components:
                   type: string
                   format: 'date-time'
 
-
     UpdateUserRequest:
       type: object
       properties:
@@ -587,7 +586,7 @@ components:
           type: boolean
           default: false
 
-    NftCollectionInfo:
+    UserNftCollectionInfo:
       type: object
       required:
         - chain
@@ -596,9 +595,16 @@ components:
         - about
         - agree_to_terms
         - understand_irreversible_action
+        - user_id
       properties:
         chain:
           $ref: '#/components/schemas/SupportedChain'
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
         name:
           type: string
           minLength: 3
@@ -663,7 +669,7 @@ components:
           type: string
           format: 'date-time'
 
-    GetAllCollectionsResponse:
+    GetAllUserCollectionsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
@@ -676,15 +682,15 @@ components:
                 items:
                   type: array
                   items:
-                    $ref: '#/components/schemas/NftCollectionInfo'
+                    $ref: '#/components/schemas/UserNftCollectionInfo'
 
-    GetCollectionResponse:
+    GetUserCollectionResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/NftCollectionInfo'
+              $ref: '#/components/schemas/UserNftCollectionInfo'
 
     NftCollectionStatus:
       type: string

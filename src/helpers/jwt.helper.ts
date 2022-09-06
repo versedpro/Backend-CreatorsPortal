@@ -35,7 +35,7 @@ export class JwtHelper {
   }
 
   async generateToken(params: JwtData, expiryInSeconds=USER_TOKEN_EXPIRY_IN_SECONDS) {
-    const { publicAddress, roleType } = params;
+    const { publicAddress, roleType, userId } = params;
     const encryptionKey = Buffer.from(this.configOption.publicKey, 'base64').toString();
     const options: jwt.SignOptions = {};
     if (expiryInSeconds) {
@@ -43,7 +43,7 @@ export class JwtHelper {
     }
     try {
       return jwt.sign(
-        { publicAddress, roleType },
+        { publicAddress, roleType, userId },
         encryptionKey, options
       );
     } catch (error) {
@@ -57,6 +57,7 @@ export class JwtHelper {
   async verifyToken(token: string): Promise<JwtData> {
     try {
       const result = await jwt.verify(token, Buffer.from(this.configOption.publicKey, 'base64').toString());
+      console.log(result);
       return result as JwtData;
     } catch (error) {
       throw {
@@ -89,6 +90,7 @@ export class JwtHelper {
 
         req.token = token;
         req.roleType = decoded.roleType;
+        req.userId = decoded.userId;
         return next();
       } catch (error: any) {
         return this.respondError(res, 403, error);

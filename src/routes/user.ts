@@ -6,6 +6,7 @@ import { JWT_PUBLIC_KEY } from '../constants';
 import { multerUpload } from '../helpers/aws/image.uploader';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 import { updateUserValidator } from '../middlewares/user.validator';
+import collectionRoutes from './user.collection';
 
 const router = express.Router();
 const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
@@ -36,6 +37,8 @@ router.put(
   cleanUpMulterFiles,
   updateUserValidator(),
   controller.handleUpdateUser);
+
+router.use('/me/collections', jwtHelper.requirePermission(RoleType.USER), collectionRoutes);
 
 
 export default router;

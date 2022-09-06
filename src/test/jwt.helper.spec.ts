@@ -6,6 +6,7 @@ describe('Generate and validate JWT token', () => {
   const publicKey = 'test_public_key';
   const jwtData = {
     publicAddress: 'publicAddress',
+    userId: 'user-id',
     roleType: RoleType.ADMIN,
   };
   it('should generate token', async () => {

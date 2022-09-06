@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as OrgService from './organization.service';
 import {
   AnswerRequest,
   CollectionInfo,
   CreateCollectionRequest,
+  CreatorType,
   DbUpdateCollectionData,
   FirstPartyQuestionAnswer,
   FirstPartyQuestionAnswerInsertData,
@@ -21,7 +21,7 @@ import { KnexHelper } from '../helpers/knex.helper';
 import { Logger } from '../helpers/Logger';
 import { NftItem } from '../interfaces/nft';
 import { LogEvent } from '../interfaces/contract';
-import { UploadFilesData } from '../interfaces/organization';
+import { OrganizationInfo, UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
 import * as CacheHelper from '../helpers/cache.helper';
 
@@ -56,6 +56,28 @@ export async function uploadImages(folder: string, files: UploadFilesData, onlyN
   };
 }
 
+export async function getCreatorId(id: string): Promise<string> {
+  Logger.Info('Getting Creator...', id);
+  const result = await KnexHelper.getOrganizationInfo({ id });
+  if (result.length > 0) {
+    return (result[0] as OrganizationInfo).id;
+  }
+  const user = await KnexHelper.getUserById(id);
+  if (user) {
+    return user.id;
+  }
+  throw new CustomError(StatusCodes.NOT_FOUND, 'Creator not found');
+}
+
+function composeIdParam(creatorId: string, creatorType: CreatorType) {
+  if (creatorType === CreatorType.ORGANIZATION) {
+    return { organization_id: creatorId };
+  } else {
+    return { user_id: creatorId };
+
+  }
+}
+
 export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo[]> {
   const { data, files } = request;
   const collectionId = data.collection_id || uuidv4();
@@ -68,15 +90,15 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
       if (collection.status === NftCollectionStatus.DEPLOYED) {
         throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: Collection already deployed');
       }
-      if (collection.organization_id.toLowerCase() !== request.organizationId.toLowerCase()) {
-        throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: organization mismatch');
+      if ((collection.organization_id || collection.user_id)!.toLowerCase() !== request.creatorId.toLowerCase()) {
+        throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: creator mismatch');
       }
     }
   }
-  // find if organization exists
-  const organization = await OrgService.getOrganization({ id: request.organizationId });
+  // find if organization or user exists
+  const creatorId = await getCreatorId(request.creatorId);
 
-  const folder = `${organization.id}/${collectionId}`;
+  const folder = `${request.creatorType.toLowerCase()}/${creatorId}/${collectionId}`;
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files ? Object.keys(files).length : 0);
@@ -90,8 +112,8 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   // Create and save collection:
   const collectionInfo = {
     id: collectionId,
-    organization_id: request.organizationId,
     chain: data.chain,
+    ...composeIdParam(creatorId, request.creatorType),
     name: data.collection_name,
     description: data.collection_description,
     about: data.collection_about,
@@ -144,7 +166,7 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   await KnexHelper.upsertMetadata(nftMetadata);
 
   const collections = await KnexHelper.getNftCollection(collectionId);
-  if (data.create_contract) {
+  if ((request.creatorType === CreatorType.ORGANIZATION) && data.create_contract) {
     await callContract(collections[0]);
     return await KnexHelper.getNftCollection(collectionId);
   }
@@ -265,10 +287,10 @@ function verifyNftReady(item: NftItem): string {
   return errors.join(', ');
 }
 
-export async function getCollectionByIdAndOrganization(body: GetCollectionRequest): Promise<CollectionInfo> {
+export async function getCollectionByIdAndCreator(body: GetCollectionRequest): Promise<CollectionInfo> {
   const results = await KnexHelper.getNftCollectionByParams({
     id: body.collectionId,
-    organization_id: body.organizationId
+    ...composeIdParam(body.creatorId, body.creatorType),
   });
   if (results.length === 0) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
@@ -293,14 +315,14 @@ export async function getCollectionById(id: string): Promise<CollectionInfo> {
 }
 
 export function generateCollectionWhereClause(request: GetOrganizationCollectionsRequest): { rawQuery: string, values: any[] } {
-  const { organization_id, name, status, oldest_date } = request;
+  const { creatorId, name, status, oldest_date } = request;
 
   let rawQuery = '';
   const clauses: string[] = [];
   const values: any[] = [];
   // Search params
-  clauses.push('organization_id = ?');
-  values.push(organization_id);
+  clauses.push(request.creatorType === CreatorType.ORGANIZATION ? 'organization_id = ?' : 'user_id = ?');
+  values.push(creatorId);
 
   if (name) {
     clauses.push('name ILIKE ?');
@@ -332,15 +354,15 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
 }
 
 export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo[]> {
-  const { organizationId, collectionId, data, files } = request;
+  const { creatorId, collectionId, data, files } = request;
 
   Logger.Info('files', files);
-  await getCollectionByIdAndOrganization({ organizationId, collectionId });
+  await getCollectionByIdAndCreator({ creatorId: creatorId, creatorType: request.creatorType, collectionId });
 
-  // find if organization exists
-  const organization = await OrgService.getOrganization({ id: organizationId });
+  // // find if organization or user exists
+  // const creatorId = await getCreatorId(request.creatorId);
 
-  const folder = `${organization.id}/${collectionId}`;
+  const folder = `${request.creatorType.toLowerCase()}/${creatorId}/${collectionId}`;
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);

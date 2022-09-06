@@ -35,7 +35,8 @@ export interface CreateCollectionData {
 
 export interface CollectionInfo {
   id?: string;
-  organization_id: string;
+  organization_id?: string;
+  user_id?: string;
   chain: string;
   name: string;
   description?: string;
@@ -65,8 +66,9 @@ export interface CollectionInfo {
 }
 
 export interface CreateCollectionRequest {
-  organizationId: string,
-  data: CreateCollectionData,
+  creatorId: string;
+  creatorType: CreatorType;
+  data: CreateCollectionData;
   files: UploadFilesData;
 }
 
@@ -82,12 +84,14 @@ export enum NftCollectionStatus {
 }
 
 export interface GetCollectionRequest {
-  organizationId: string;
+  creatorId: string;
+  creatorType: CreatorType;
   collectionId: string;
 }
 
 export interface GetOrganizationCollectionsRequest {
-  organization_id: string;
+  creatorId: string;
+  creatorType: CreatorType;
   name?: string;
   status?: NftCollectionStatus;
   oldest_date?: number;
@@ -150,7 +154,8 @@ export interface DbUpdateCollectionData {
 }
 
 export interface UpdateCollectionRequest {
-  organizationId: string,
+  creatorId: string,
+  creatorType: CreatorType;
   collectionId: string,
   data: UpdateCollectionData,
   files: UploadFilesData;
@@ -175,4 +180,9 @@ export interface AnswerRequest {
   collectionId: string;
   walletAddress: string;
   answers: FirstPartyQuestionAnswerInsertData[];
+}
+
+export enum CreatorType {
+  ORGANIZATION = 'ORGANIZATION',
+  USER = 'USER',
 }

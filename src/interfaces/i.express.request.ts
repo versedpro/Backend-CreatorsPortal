@@ -3,6 +3,7 @@ import { RoleType } from './jwt.config';
 
 export interface IExpressRequest extends Request {
   publicAddress?: string;
-  roleType?: RoleType,
+  roleType?: RoleType;
+  userId?: string;
   token?: string;
 }

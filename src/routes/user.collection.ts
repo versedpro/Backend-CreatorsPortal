@@ -29,7 +29,6 @@ router.get('/:collection_id', controller.handleGetCollectionById);
 router.put('/:collection_id',
   multerUpload.fields([
     { name: 'collection_image', maxCount: 1 },
-    { name: 'collection_background_header', maxCount: 1 },
   ]),
   cleanUpMulterFiles,
   updateCollectionExpValidator(),

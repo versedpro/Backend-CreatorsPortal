@@ -24,7 +24,7 @@ export async function generateAuthToken(request: GenerateAuthRequest): Promise<A
 
   await SignatureVerifier.verifySignature({ publicAddress, signature, user });
   const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
-  const token = await jwtHelper.generateToken({ publicAddress, roleType });
+  const token = await jwtHelper.generateToken({ publicAddress, roleType, userId: user.id });
 
   // Update Nonce
   if (roleType === RoleType.ADMIN) {

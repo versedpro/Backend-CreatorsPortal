@@ -13,6 +13,7 @@ export enum RoleType {
 
 export interface JwtData {
   publicAddress: string,
+  userId: string,
   roleType?: RoleType,
 }
 

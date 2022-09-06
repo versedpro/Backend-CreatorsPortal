@@ -1,20 +1,21 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { Request, Response as ExpressResponse } from 'express';
+import { Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
-import { CreateCollectionData, NftCollectionStatus, UpdateCollectionData } from '../interfaces/collection';
+import { CreateCollectionData, CreatorType, NftCollectionStatus, UpdateCollectionData } from '../interfaces/collection';
 import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
 import { UploadFilesData } from '../interfaces/organization';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
+import { RoleType } from '../interfaces/jwt.config';
 
 export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   Logger.Info('Create Collection request', req.body);
   try {
-    const organizationId = req.params.organization_id;
+    const creatorId = req.params.organization_id || req.userId;
 
     const data = req.body as CreateCollectionData;
 
@@ -100,7 +101,8 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     }
 
     const collectionArr = await collectionService.addCollection({
-      organizationId,
+      creatorId: creatorId!,
+      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
       data,
       files: req.files as UploadFilesData,
     });
@@ -121,14 +123,15 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
   }
 }
 
-export async function handleGetCollections(req: Request, res: ExpressResponse): Promise<void> {
+export async function handleGetCollections(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
-    const { organization_id } = req.params;
+    const creatorId = req.params.organization_id || req.userId;
 
     const { name, status, oldest_date, page, size } = req.query;
 
     const response = await collectionService.getOrganizationCollections({
-      organization_id: <string>organization_id,
+      creatorId: <string>creatorId,
+      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
       name: <string>name,
       status: status ? <string>status as NftCollectionStatus : undefined,
       oldest_date: oldest_date ? parseInt(<string>oldest_date) : undefined,
@@ -145,11 +148,17 @@ export async function handleGetCollections(req: Request, res: ExpressResponse): 
   }
 }
 
-export async function handleGetCollectionById(req: Request, res: ExpressResponse): Promise<void> {
+export async function handleGetCollectionById(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
-    const { organization_id: organizationId, collection_id: collectionId } = req.params;
+    const { collection_id: collectionId } = req.params;
+    const creatorId = req.params.organization_id || req.userId;
 
-    const response = await collectionService.getCollectionByIdAndOrganization({ organizationId, collectionId });
+
+    const response = await collectionService.getCollectionByIdAndCreator({
+      creatorId: creatorId!,
+      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
+      collectionId
+    });
 
     return Response.success(res, {
       message: 'Successful',
@@ -163,12 +172,14 @@ export async function handleGetCollectionById(req: Request, res: ExpressResponse
 export async function handleUpdateCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   Logger.Info('Update Collection request', req.body);
   try {
-    const { organization_id: organizationId, collection_id: collectionId } = req.params;
+    const { collection_id: collectionId } = req.params;
+    const creatorId = req.params.organization_id || req.userId;
 
     const data = req.body as UpdateCollectionData;
 
     const collectionArr = await collectionService.updateCollection({
-      organizationId,
+      creatorId: creatorId!,
+      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
       collectionId,
       data,
       files: req.files as UploadFilesData,

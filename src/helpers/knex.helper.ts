@@ -281,6 +281,13 @@ export class KnexHelper {
     }
   }
 
+  static async getUserById(id: string): Promise<UserInfo | undefined> {
+    const result = await knex(dbTables.users).select().where({ id });
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+
   static async updateUser(public_address: string, body: UpdateUserDbRequest): Promise<boolean> {
     // Always have a new Nonce
     if (!body.nonce) {

@@ -21,6 +21,7 @@ export interface UpdateDbAdminRequest {
 }
 
 export interface Admin {
+  id: string;
   public_address: string;
   username: string;
   nonce: number;
