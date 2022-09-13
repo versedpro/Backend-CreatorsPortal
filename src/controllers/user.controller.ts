@@ -1,24 +1,25 @@
-import { Request, Response as ExpressResponse } from 'express';
+import { Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as userService from '../services/user.service';
 import { StatusCodes } from 'http-status-codes';
 import { UploadFilesData } from '../interfaces/organization';
+import { IExpressRequest } from '../interfaces/i.express.request';
+//
+// export async function handleAddUser(req: Request, res: ExpressResponse): Promise<void> {
+//   try {
+//     const { public_address: publicAddress } = req.params;
+//     const user = await userService.addUser({ public_address: publicAddress.toLowerCase() });
+//
+//     return Response.success(res, {
+//       message: 'Successful',
+//       response: user,
+//     }, StatusCodes.OK);
+//   } catch (err: any) {
+//     return Response.handleError(res, err);
+//   }
+// }
 
-export async function handleAddUser(req: Request, res: ExpressResponse): Promise<void> {
-  try {
-    const { public_address: publicAddress } = req.params;
-    const user = await userService.addUser({ public_address: publicAddress.toLowerCase() });
-
-    return Response.success(res, {
-      message: 'Successful',
-      response: user,
-    }, StatusCodes.OK);
-  } catch (err: any) {
-    return Response.handleError(res, err);
-  }
-}
-
-export async function handleGetUser(req: Request, res: ExpressResponse): Promise<void> {
+export async function handleGetUser(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
     const { public_address: publicAddress } = req.params;
     const user = await userService.getUser({ public_address: publicAddress!.toString() });
@@ -32,12 +33,10 @@ export async function handleGetUser(req: Request, res: ExpressResponse): Promise
   }
 }
 
-export async function handleUpdateUser(req: Request, res: ExpressResponse): Promise<void> {
+export async function handleUpdateUser(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
-    const { public_address } = req.params;
-
     const user = await userService.updateUser({
-      public_address: public_address.toLowerCase(),
+      organizationId: req.userId!,
       body: req.body,
       files: req.files as UploadFilesData,
     });

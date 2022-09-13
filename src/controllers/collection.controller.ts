@@ -10,7 +10,6 @@ import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
 import { UploadFilesData } from '../interfaces/organization';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
-import { RoleType } from '../interfaces/jwt.config';
 
 export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   Logger.Info('Create Collection request', req.body);
@@ -102,7 +101,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     const collectionArr = await collectionService.addCollection({
       creatorId: creatorId!,
-      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
+      creatorType: CreatorType.ORGANIZATION,
       data,
       files: req.files as UploadFilesData,
     });
@@ -131,7 +130,7 @@ export async function handleGetCollections(req: IExpressRequest, res: ExpressRes
 
     const response = await collectionService.getOrganizationCollections({
       creatorId: <string>creatorId,
-      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
+      creatorType: CreatorType.ORGANIZATION,
       name: <string>name,
       status: status ? <string>status as NftCollectionStatus : undefined,
       oldest_date: oldest_date ? parseInt(<string>oldest_date) : undefined,
@@ -156,7 +155,7 @@ export async function handleGetCollectionById(req: IExpressRequest, res: Express
 
     const response = await collectionService.getCollectionByIdAndCreator({
       creatorId: creatorId!,
-      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
+      creatorType: CreatorType.ORGANIZATION,
       collectionId
     });
 
@@ -179,7 +178,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
 
     const collectionArr = await collectionService.updateCollection({
       creatorId: creatorId!,
-      creatorType: req.roleType === RoleType.ADMIN ? CreatorType.ORGANIZATION : CreatorType.USER,
+      creatorType: CreatorType.ORGANIZATION,
       collectionId,
       data,
       files: req.files as UploadFilesData,

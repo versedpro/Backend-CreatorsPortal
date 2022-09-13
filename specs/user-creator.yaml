@@ -6,21 +6,15 @@ info:
 servers:
   - url: 'https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api/users'
 tags:
+  - name: onboarding
   - name: user
   - name: nft_collection
 
 paths:
-  /{public_address}:
-    parameters:
-      - name: public_address
-        in: path
-        schema:
-          type: string
-          pattern: (\b0x[a-fA-F0-9]{40}\b)
-        required: true
+  /signup:
     post:
       tags:
-        - user
+        - onboarding
       summary: Signup User
       operationId: signUpUser
       requestBody:
@@ -37,6 +31,71 @@ paths:
                 $ref: '#/components/schemas/SignUpUserResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
+
+  /login:
+    post:
+      tags:
+        - onboarding
+      summary: Login User
+      operationId: loginUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpUserResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /forgot-password:
+    post:
+      tags:
+        - onboarding
+      summary: Request for password reset code
+      operationId: forgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /change-password:
+    post:
+      tags:
+        - onboarding
+      summary: Endpoint to call when user has erceived code and wants to save new password
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /me:
     get:
       tags:
         - user
@@ -44,6 +103,7 @@ paths:
       operationId: GetUser
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       responses:
         '200':
           description: OK
@@ -82,6 +142,7 @@ paths:
                 $ref: '#/components/schemas/SignUpUserResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
+
   /{public_address}/signing-info:
     parameters:
       - name: public_address
@@ -92,11 +153,12 @@ paths:
         required: true
     get:
       tags:
-        - user
+        - onboarding
       summary: Get user nonce for signing
       operationId: GetUserSigningInfo
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       responses:
         '200':
           description: OK
@@ -121,6 +183,7 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       operationId: createNftCollection
       summary: Create NFT collection for user
       description: |
@@ -206,6 +269,7 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       parameters:
         - name: name
           in: query
@@ -264,6 +328,7 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       operationId: updateCollectionInfo
       summary: Update a deployed collection info
       description: |
@@ -349,6 +414,7 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
+        - ClientID: [ ]
       operationId: getCollectionInfo
       summary: Get collection info
       responses:
@@ -375,6 +441,11 @@ components:
       type: apiKey
       in: header
       name: x-auth-token
+    ClientID:
+      type: apiKey
+      in: header
+      name: x-cient-id
+      description: Unique identifier for each frontend browser/client
   responses:
     ErrorResponse401:
       description: Unauthorized
@@ -426,11 +497,30 @@ components:
     SignUpUserRequest:
       type: object
       required:
-        - public_address
+        - email
+        - password
+        - invite_code
       properties:
-        public_address:
+        email:
           type: string
-          pattern: (\b0x[a-fA-F0-9]{40}\b)
+          format: email
+        password:
+          type: string
+        invite_code:
+          type: string
+          format: string
+
+    LoginUserRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
 
     SignUpUserResponse:
       allOf:
@@ -438,28 +528,33 @@ components:
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/UserData'
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/UserInfo'
+                token:
+                  type: string
 
-    UserData:
+    OnboardingType:
+      type: string
+      enum:
+        - INVITED
+        - ADMIN_CREATED
+
+    UserInfo:
       type: object
-      required:
-        - public_address
-        - nonce
-        - created_at
-        - updated_at
       properties:
-        public_address:
+        id:
           type: string
+          format: uuid
         nonce:
           type: number
-        username:
-          type: string
-        image:
-          type: string
+        onboarding_type:
+          $ref: '#/components/schemas/OnboardingType'
         name:
           type: string
           minLength: 3
-          maxLength: 50
+          maxLength: 30
         website:
           type: string
           format: uri
@@ -475,12 +570,24 @@ components:
         instagram:
           type: string
           format: uri
+        email:
+          type: string
+          format: email
+        public_address:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
         created_at:
           type: string
           format: 'date-time'
         updated_at:
           type: string
           format: 'date-time'
+        image:
+          type: string
+          format: uri
+        banner:
+          type: string
+          format: uri
 
     GetUserResponse:
       allOf:
@@ -488,7 +595,7 @@ components:
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/UserData'
+              $ref: '#/components/schemas/UserInfo'
 
     GetUserSigningInfoResponse:
       allOf:
@@ -696,6 +803,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - PROCESSING_PAYMENT
         - DEPLOYMENT_IN_PROGRESS
         - DEPLOYED
         - DEPLOYMENT_FAILED
@@ -715,3 +823,27 @@ components:
         enabled:
           type: boolean
           default: false
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - email
+        - password
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        otp:
+          type: string

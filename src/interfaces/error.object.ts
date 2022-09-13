@@ -16,3 +16,9 @@ export class InvalidSignatureError extends Error {
     super('Invalid signature');
   }
 }
+
+export class inviteExistsError extends Error {
+  constructor() {
+    super('Invite has already been sent to this email');
+  }
+}

@@ -62,10 +62,10 @@ export async function getCreatorId(id: string): Promise<string> {
   if (result.length > 0) {
     return (result[0] as OrganizationInfo).id;
   }
-  const user = await KnexHelper.getUserById(id);
-  if (user) {
-    return user.id;
-  }
+  // const user = await KnexHelper.getUserById(id);
+  // if (user) {
+  //   return user.id;
+  // }
   throw new CustomError(StatusCodes.NOT_FOUND, 'Creator not found');
 }
 

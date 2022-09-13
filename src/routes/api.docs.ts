@@ -9,11 +9,15 @@ const swaggerUiOptions = {
     urls: [
       {
         url: '../specs/api.yaml',
-        name: 'General'
+        name: 'Admin'
       },
       {
         url: '../specs/user-creator.yaml',
         name: 'User'
+      },
+      {
+        url: '../specs/general.yaml',
+        name: 'General'
       }
     ]
   }

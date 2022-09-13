@@ -10,7 +10,7 @@ tags:
   - name: auth
   - name: organization
   - name: nft_collection
-  - name: nft
+  - name: organization_invite
 
 paths:
   /admin:
@@ -109,7 +109,7 @@ paths:
                 code: 403
                 message: An admin public_address is required
 
-  /auth/{user_type}:
+  /auth/admin:
     parameters:
       - name: user_type
         in: path
@@ -124,9 +124,9 @@ paths:
         - auth
       summary: Sign in admin
       description: |
-        1. Get the user Nonce by making an API request to get the user.
+        1. Get the admin Nonce by making an API request to get the user.
         2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
-        3. Let the user sign this with their wallet.
+        3. Let the admin sign this with their wallet.
         4. Send public_address and signature in request
       requestBody:
         content:
@@ -188,7 +188,7 @@ paths:
                 discord:
                   type: string
                   format: uri
-                admin_email:
+                email:
                   type: string
                   format: email
                 admin_name:
@@ -241,7 +241,7 @@ paths:
           schema:
             $ref: '#/components/schemas/OrganizationType'
           required: false
-        - name: admin_email
+        - name: email
           description: part of the admin email
           in: query
           schema:
@@ -336,6 +336,199 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrganizationResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+
+  /organizations/invites:
+    post:
+      tags:
+        - organization_invite
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: inviteOrganization
+      summary: Invite an organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteOrganizationRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteOrganizationResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+    get:
+      tags:
+        - organization_invite
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: getOrganizationInvites
+      summary: Get all organizations invites
+      parameters:
+        - name: keyword
+          description: part of the organization name or email
+          in: query
+          schema:
+            type: string
+            minLength: 2
+          required: false
+        - name: status
+          description: filter by status
+          in: query
+          schema:
+            $ref: '#/components/schemas/InviteStatus'
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+        - name: date_sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          required: false
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllOrganizationsInvitesResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+
+  /organizations/invites/{invite_id}:
+    parameters:
+      - name: invite_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    delete:
+      tags:
+        - organization_invite
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: deleteOrganizationInviteById
+      summary: Delete organizations invite by ID
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+
+  /organizations/invites/{invite_id}/resend:
+    parameters:
+      - name: invite_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - organization_invite
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: resendOrganizationInvite
+      summary: Resent organization invite by ID
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+
+  /invites/verify:
+    get:
+      tags:
+        - organization_invite
+      operationId: verifyOrgnizationInvite
+      summary: Verify invite by invite_code
+      description: |
+        no x-auth-token needed
+        When a user clicks on the link to signup; the link will look like this for exmaple
+        https://lunamarketplace.vercel.app/signup?invite_code=I3RCnT7yE8O4vB5nGdbj&email=example@gmail.com
+        You can get the details for this invite using the invite_code and see if it is still valid or not.
+      parameters:
+        - name: invite_code
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteOrganizationResponse'
         '403':
           description: Forbidden
           content:
@@ -643,77 +836,6 @@ paths:
                 code: 403
                 message: An admin auth key is required
 
-  /nft/{collection_id}/metadata/{token_id}:
-    parameters:
-      - name: collection_id
-        in: path
-        schema:
-          type: string
-        required: true
-      - name: token_id
-        in: path
-        schema:
-          type: string
-        required: true
-    get:
-      tags:
-        - nft
-      summary: Get Metadata by token id
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NftItem'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                error: true
-                code: 404
-                message: Token metadata was not found
-
-  /mint/{collection_id}/info:
-    parameters:
-      - name: collection_id
-        in: path
-        schema:
-          type: string
-          format: uuid
-        required: true
-    get:
-      tags:
-        - mint
-      security:
-        - PluginAuth: [ ]
-      operationId: getMintInfo
-      summary: Get mint info
-      description: |
-        This endpoint requires a Basic Authorization, i.eusername and password header authentication.
-        <br/>Use the api key as username.
-        <br/>Use the secret key as password.
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NftMintInfo'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                error: true
-                code: 401
-                message: Authentication required.
-
   /mint/{collection_id}/answers:
     parameters:
       - name: collection_id
@@ -769,41 +891,6 @@ paths:
       summary: Get Mint Question Answers
       description: |
         Creator endpoint to get all answers to the mint questions.
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostMintAnswersResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                error: true
-                code: 401
-                message: Authentication required.
-
-    post:
-      tags:
-        - mint
-      security:
-        - PluginAuth: [ ]
-      operationId: answerMintQuestions
-      summary: Answer mint questions
-      description: |
-        Only call this endpoint if the collection has first_party_data that the user has to answer. 
-        <br/>This endpoint requires a Basic Authorization, i.eusername and password header authentication.
-        <br/>Use the api key as username.
-        <br/>Use the secret key as password.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostMintRequest'
       responses:
         '200':
           description: Ok
@@ -992,12 +1079,10 @@ components:
         discord:
           type: string
           format: uri
-        admin_email:
+        email:
           type: string
           format: email
-        admin_name:
-          type: string
-        admin_wallet_address:
+        public_address:
           type: string
           pattern: (\b0x[a-fA-F0-9]{40}\b)
         image:
@@ -1007,18 +1092,26 @@ components:
           type: string
           format: binary
 
+    OnboardingType:
+      type: string
+      enum:
+        - INVITED
+        - ADMIN_CREATED
+
     OrganizationInfo:
       type: object
       properties:
         id:
           type: string
           format: uuid
+        nonce:
+          type: number
+        onboarding_type:
+          $ref: '#/components/schemas/OnboardingType'
         name:
           type: string
           minLength: 3
           maxLength: 30
-        type:
-          $ref: '#/components/schemas/OrganizationType'
         website:
           type: string
           format: uri
@@ -1028,12 +1121,16 @@ components:
         discord:
           type: string
           format: uri
-        admin_email:
+        facebook:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+        email:
           type: string
           format: email
-        admin_name:
-          type: string
-        admin_wallet_address:
+        public_address:
           type: string
           pattern: (\b0x[a-fA-F0-9]{40}\b)
         created_at:
@@ -1254,21 +1351,6 @@ components:
           type: string
           format: 'date-time'
 
-    GetNftsResponse:
-      allOf:
-        - $ref: '#/components/schemas/GenericResponse'
-        - type: object
-          properties:
-            data:
-              type: object
-              properties:
-                pagination:
-                  $ref: '#/components/schemas/Pagination'
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/NftItem'
-
     GetAllCollectionsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
@@ -1298,71 +1380,6 @@ components:
         - IN_PROGRESS
         - DEPLOYED
 
-    NftMintInfo:
-      type: object
-      required:
-        - chain
-        - name
-        - description
-        - about
-        - contract_address
-        - background_header
-      properties:
-        chain:
-          $ref: '#/components/schemas/SupportedChain'
-        name:
-          type: string
-          minLength: 3
-          maxLength: 30
-        description:
-          type: string
-          minLength: 10
-          maxLength: 200
-        about:
-          type: string
-          minLength: 20
-          maxLength: 1000
-        contract_address:
-          type: string
-        image:
-          type: string
-          format: uri
-        background_header:
-          type: string
-          format: uri
-        first_party_data:
-          description: These are questions the organization would want to collect from minters.
-          type: array
-          items:
-            $ref: '#/components/schemas/FirstPartyDatum'
-        social_links:
-          description: These are social links for the collection.
-          type: array
-          items:
-            $ref: '#/components/schemas/CollectionSocialLink'
-        checkout_background_color:
-          description: Color for checkout plugin background
-          type: string
-        checkout_font:
-          description: Font for checkout plugin texts
-          type: string
-        checkout_font_size:
-          description: Integer font size for checkout plugin texts
-          type: string
-        checkout_font_color:
-          description: Hex Color for checkout plugin texts
-          type: string
-        terms_and_condition_enabled:
-          description: Booelan Option to display T&C on checkout plugin
-          type: string
-          enum:
-            - true
-            - false
-        terms_and_condition_link:
-          description: Link to T&C
-          type: string
-          format: uri
-
     FirstPartyAnswers:
       type: object
       required:
@@ -1381,20 +1398,6 @@ components:
         "question_type": "SHORT_TEXT"
         "question": "Name"
         "answer": "Hashcode"
-
-
-    PostMintRequest:
-      type: object
-      required:
-        - wallet_address
-        - answers
-      properties:
-        wallet_address:
-          type: string
-        answers:
-          type: array
-          items:
-            $ref: '#/components/schemas/FirstPartyAnswers'
 
     CollectionSocialLink:
       type: object
@@ -1461,3 +1464,66 @@ components:
         updated_at:
           type: string
           format: 'date-time'
+
+    InviteOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+        email:
+          type: string
+          format: email
+
+    InviteOrganizationResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/OrganizationInvite'
+
+    InviteStatus:
+      type: string
+      enum:
+        - SIGNED_UP
+        - NOT_SIGNED_UP
+        - EXPIRED
+
+    OrganizationInvite:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+        email:
+          type: string
+          format: email
+        invite_code:
+          type: string
+        status:
+          $ref: '#/components/schemas/InviteStatus'
+        created_at:
+          type: string
+          format: 'date-time'
+        expires_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
+
+    GetAllOrganizationsInvitesResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  $ref: '#/components/schemas/OrganizationInvite'

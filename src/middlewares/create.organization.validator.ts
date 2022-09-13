@@ -28,7 +28,7 @@ export const createOrganizationValidator = () => {
       .trim()
       .isURL()
       .bail(),
-    body('admin_email', 'Valid admin_email is required')
+    body('email', 'Valid email is required')
       .optional()
       .trim()
       .isEmail()
@@ -38,7 +38,7 @@ export const createOrganizationValidator = () => {
       .trim()
       .isLength({ min: 3, max: 30 })
       .bail(),
-    body('admin_wallet_address', 'Valid wallet address is required')
+    body('public_address', 'Valid wallet address is required')
       .optional()
       .trim()
       .matches(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))
@@ -58,7 +58,7 @@ export const getOrganizationValidator = () => {
       .trim()
       .isIn(['BRAND', 'COMMUNITY'])
       .bail(),
-    query('admin_email', 'Valid admin_email is required')
+    query('email', 'Valid email is required')
       .optional()
       .trim()
       .isEmail()

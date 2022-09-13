@@ -3,10 +3,15 @@ import { Admin, GetAdminRequest, SaveAdminRequest, UpdateDbAdminRequest } from '
 
 import { db as knex } from '../../data/db';
 import {
+  GetInviteRequest,
+  GetInvitesRequest,
+  GetOrganizationAuthRequest,
   GetOrganizationInfoRequest,
   GetOrganizationsRequest,
   GetOrganizationsResponse,
+  InsertInviteDbRequest,
   OrganizationInfo,
+  UpdateInviteDbRequest,
   UpdateOrganizationRequest
 } from '../interfaces/organization';
 import { Logger } from './Logger';
@@ -21,7 +26,9 @@ import {
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 import { GetItemRequest } from '../interfaces/get.item.request';
-import { UpdateUserDbRequest, UserInfo } from '../interfaces/user';
+import { UpdateUserDbRequest } from '../interfaces/user';
+import { OrgInvite, OrgInviteStatus } from '../interfaces/OrgInvite';
+import { UserAuth } from '../interfaces/onboarding';
 
 export class KnexHelper {
   /*
@@ -58,9 +65,10 @@ export class KnexHelper {
       website: org.website,
       twitter: org.twitter,
       discord: org.discord,
-      admin_email: org.admin_email,
+      email: org.email,
       admin_name: org.admin_name,
-      admin_wallet_address: org.admin_wallet_address,
+      public_address: org.public_address,
+      onboarding_type: org.onboarding_type,
     };
     const result = await knex(dbTables.organizations).insert(newOrg, 'id');
     Logger.Info(result);
@@ -72,8 +80,16 @@ export class KnexHelper {
     return result as OrganizationInfo[];
   }
 
+  static async getSingleOrganizationInfo(request: GetOrganizationInfoRequest): Promise<OrganizationInfo | undefined> {
+    const result = await knex(dbTables.organizations).select().where(request).limit(1);
+    if (result.length === 0) {
+      return undefined;
+    }
+    return result[0];
+  }
+
   static generateOrganizationWhereClause(request: GetOrganizationsRequest): { rawQuery: string, values: string[] } {
-    const { name, type, admin_email } = request;
+    const { name, type, email } = request;
 
     let rawQuery = '';
     const clauses: string[] = [];
@@ -87,9 +103,9 @@ export class KnexHelper {
       clauses.push('type ILIKE ?');
       values.push(`${type}%`);
     }
-    if (admin_email) {
-      clauses.push('admin_email ILIKE ?');
-      values.push(`%${admin_email}%`);
+    if (email) {
+      clauses.push('email ILIKE ?');
+      values.push(`%${email}%`);
     }
 
     if (clauses.length > 0) {
@@ -135,9 +151,11 @@ export class KnexHelper {
       website: org.website,
       twitter: org.twitter,
       discord: org.discord,
-      admin_email: org.admin_email,
+      facebook: org.facebook,
+      instagram: org.instagram,
+      email: org.email,
       admin_name: org.admin_name,
-      admin_wallet_address: org.admin_wallet_address,
+      public_address: org.public_address,
       image: org.image,
       banner: org.banner,
     };
@@ -274,20 +292,6 @@ export class KnexHelper {
       .returning('*');
   }
 
-  static async getUser(public_address: string): Promise<UserInfo | undefined> {
-    const result = await knex(dbTables.users).select().where({ public_address: public_address.toLowerCase() });
-    if (result.length > 0) {
-      return result[0];
-    }
-  }
-
-  static async getUserById(id: string): Promise<UserInfo | undefined> {
-    const result = await knex(dbTables.users).select().where({ id });
-    if (result.length > 0) {
-      return result[0];
-    }
-  }
-
   static async updateUser(public_address: string, body: UpdateUserDbRequest): Promise<boolean> {
     // Always have a new Nonce
     if (!body.nonce) {
@@ -297,5 +301,94 @@ export class KnexHelper {
       .where({ public_address })
       .update(body);
     return true;
+  }
+
+  /*
+ * Organizations CRUD
+ * */
+  static async insertOrganizationInvite(invite: InsertInviteDbRequest): Promise<any> {
+    return knex(dbTables.organizationInvites).insert(invite, 'id');
+  }
+
+  static async getOrganizationInvite(request: GetInviteRequest): Promise<OrgInvite[]> {
+    const result = await knex(dbTables.organizationInvites).select().where(request).limit(1);
+    return result as OrgInvite[];
+  }
+
+  static async getInvites(request: GetInvitesRequest): Promise<{ items: OrgInvite[], pagination: Pagination }> {
+    const clauses = [];
+    const values = [];
+    if (request.keyword) {
+      clauses.push('name ILIKE ? OR email ILIKE ?');
+      values.push(`%${request.keyword}%`);
+      values.push(`%${request.keyword}%`);
+    }
+    if (request.status) {
+      clauses.push('status = ?');
+      values.push(`${request.status}`);
+    }
+    const result = await knex(dbTables.organizationInvites).select().whereRaw(clauses.join('AND'), values)
+      .offset((request.page - 1) * request.size)
+      .orderBy('expires_at', request.date_sort || 'DESC')
+      .limit(request.size);
+
+    const countResult = await knex(dbTables.organizationInvites)
+      .count('* as count')
+      .whereRaw(clauses.join('AND'), values)
+      .first();
+
+    const count = parseInt(countResult?.count.toString() || '0');
+
+    const pagination: Pagination = {
+      page: request.page,
+      size: result.length,
+      last_page: Math.ceil(count / request.size),
+      total_count: count,
+    };
+    return { items: result as OrgInvite[], pagination };
+  }
+
+  static async deleteInvite(id: string): Promise<number> {
+    return knex(dbTables.organizationInvites).where({ id }).del();
+  }
+
+  static async updateOrganizationInvite(invite: UpdateInviteDbRequest): Promise<any> {
+    return knex(dbTables.organizationInvites)
+      .where({ id: invite.id })
+      .update({
+        invite_code: invite.invite_code,
+        expires_at: invite.expires_at,
+      });
+  }
+
+  // RUNS EVERY 15 MINUTES
+  static async updateExpiredInvites(): Promise<number> {
+    Logger.Info('Updating Invites expiry');
+    const updated = await knex(dbTables.organizationInvites)
+      .whereRaw('expires_at < now () AND status != \'EXPIRED\'')
+      .update({
+        status: OrgInviteStatus.EXPIRED,
+      });
+    Logger.Info(`Updated ${updated} Invites expiry`);
+    return updated;
+  }
+
+  // RUNS EVERY 5 MINUTES
+  static async deleteExpiredTokens(): Promise<number> {
+    Logger.Info('Deleting Expired User Tokens');
+    const deleted = await knex(dbTables.userTokens)
+      .whereRaw('expires_at < now ()')
+      .delete();
+    Logger.Info(`Deleted ${deleted} user tokens`);
+    return deleted;
+  }
+
+  static async getOrganizationAuth(request: GetOrganizationAuthRequest): Promise<UserAuth | undefined> {
+    const res = await knex(dbTables.organizationAuths).select()
+      .where(request).limit(1);
+    if (res.length === 0) {
+      return undefined;
+    }
+    return res[0] as unknown as UserAuth;
   }
 }

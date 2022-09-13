@@ -7,7 +7,7 @@ const request: GetOrganizationsRequest = {
 };
 const name = 'Luna';
 const type = 'BRAND';
-const admin_email = 'admin@lunmarket.io';
+const email = 'admin@lunmarket.io';
 
 describe('Test where clause generation', () => {
 
@@ -23,8 +23,8 @@ describe('Test where clause generation', () => {
     expect(values).toEqual([`%${name}%`, `${type}%`]);
   });
   it('should generate name clause', async () => {
-    const { rawQuery, values } = KnexHelper.generateOrganizationWhereClause({ name, type, admin_email, ...request });
-    expect(rawQuery).toEqual(' WHERE name ILIKE ? AND type ILIKE ? AND admin_email ILIKE ?');
-    expect(values).toEqual([`%${name}%`, `${type}%`, `%${admin_email}%`]);
+    const { rawQuery, values } = KnexHelper.generateOrganizationWhereClause({ name, type, email, ...request });
+    expect(rawQuery).toEqual(' WHERE name ILIKE ? AND type ILIKE ? AND email ILIKE ?');
+    expect(values).toEqual([`%${name}%`, `${type}%`, `%${email}%`]);
   });
 });

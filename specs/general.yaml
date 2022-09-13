@@ -1,0 +1,349 @@
+openapi: 3.0.0
+info:
+  title: Luna Creators Portal General API Docs
+  description: 'basePath is /api'
+  version: 1.0.0
+servers:
+  - url: 'https://creators-portals-api-staging-8lv8j.ondigitalocean.app/api'
+tags:
+  - name: nft
+  - name: mint
+
+paths:
+  /nft/{collection_id}/metadata/{token_id}:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: token_id
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      tags:
+        - nft
+      summary: Get Metadata by token id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NftItem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 404
+                message: Token metadata was not found
+
+  /mint/{collection_id}/info:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    get:
+      tags:
+        - mint
+      security:
+        - PluginAuth: [ ]
+      operationId: getMintInfo
+      summary: Get mint info
+      description: |
+        This endpoint requires a Basic Authorization, i.eusername and password header authentication.
+        <br/>Use the api key as username.
+        <br/>Use the secret key as password.
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NftMintInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
+  /mint/{collection_id}/answers:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - mint
+      security:
+        - PluginAuth: [ ]
+      operationId: answerMintQuestions
+      summary: Answer mint questions
+      description: |
+        Only call this endpoint if the collection has first_party_data that the user has to answer. 
+        <br/>This endpoint requires a Basic Authorization, i.eusername and password header authentication.
+        <br/>Use the api key as username.
+        <br/>Use the secret key as password.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostMintRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMintAnswersResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
+components:
+  securitySchemes:
+    PluginAuth:
+      type: http
+      scheme: basic
+  schemas:
+    SupportedChain:
+      type: string
+      enum:
+        - ethereum
+        - polygon
+
+    NftAttribute:
+      type: object
+      required:
+        - trait_type
+      properties:
+        trait_type:
+          type: string
+        display_type:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+
+    FirstPartyDatumType:
+      type: string
+      enum:
+        - SHORT_TEXT
+        - LONG_TEXT
+        - EMAIL
+
+    FirstPartyDatum:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/FirstPartyDatumType'
+        question:
+          type: string
+          default: Email
+        is_required:
+          type: boolean
+          default: false
+
+    TokenFormat:
+      type: string
+      enum:
+        - ERC1155
+
+    NftItem:
+      type: object
+      required:
+        - name
+        - amount
+      properties:
+        name:
+          minLength: 3
+          maxLength: 30
+        amount:
+          type: integer
+          format: int32
+          default: 1
+          minimum: 1
+        image:
+          type: string
+          format: uri
+        image_data:
+          type: string
+        royalties:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: percentage, e.g 7
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NftAttribute'
+        description:
+          type: string
+        external_url:
+          type: string
+        chain:
+          type: string
+        background_color:
+          type: string
+        token_format:
+          $ref: '#/components/schemas/TokenFormat'
+        animation_url:
+          type: string
+        youtube_url:
+          type: string
+        contract_address:
+          type: string
+        token_hash:
+          type: string
+        token_uri:
+          type: string
+
+    NftMintInfo:
+      type: object
+      required:
+        - chain
+        - name
+        - description
+        - about
+        - contract_address
+        - background_header
+      properties:
+        chain:
+          $ref: '#/components/schemas/SupportedChain'
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+        description:
+          type: string
+          minLength: 10
+          maxLength: 200
+        about:
+          type: string
+          minLength: 20
+          maxLength: 1000
+        contract_address:
+          type: string
+        image:
+          type: string
+          format: uri
+        background_header:
+          type: string
+          format: uri
+        first_party_data:
+          description: These are questions the organization would want to collect from minters.
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyDatum'
+        social_links:
+          description: These are social links for the collection.
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionSocialLink'
+        checkout_background_color:
+          description: Color for checkout plugin background
+          type: string
+        checkout_font:
+          description: Font for checkout plugin texts
+          type: string
+        checkout_font_size:
+          description: Integer font size for checkout plugin texts
+          type: string
+        checkout_font_color:
+          description: Hex Color for checkout plugin texts
+          type: string
+        terms_and_condition_enabled:
+          description: Booelan Option to display T&C on checkout plugin
+          type: string
+          enum:
+            - true
+            - false
+        terms_and_condition_link:
+          description: Link to T&C
+          type: string
+          format: uri
+
+    FirstPartyAnswers:
+      type: object
+      required:
+        - question_type
+        - question
+        - answer
+      properties:
+        question_type:
+          $ref: '#/components/schemas/FirstPartyDatumType'
+        question:
+          type: string
+          default: Email
+        answer:
+          type: string
+      example:
+        "question_type": "SHORT_TEXT"
+        "question": "Name"
+        "answer": "Hashcode"
+
+    PostMintRequest:
+      type: object
+      required:
+        - wallet_address
+        - answers
+      properties:
+        wallet_address:
+          type: string
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyAnswers'
+
+    CollectionSocialLink:
+      type: object
+      example:
+        "name": "twitter"
+        "url": "https://www.twitter.com/@my_username"
+        "enabled": true
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+          default: false
+
+    PostMintAnswersResponse:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FirstPartyAnswers'

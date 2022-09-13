@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { AuthResponse, GenerateAuthRequest, RoleType } from '../interfaces/jwt.config';
 import { Admin } from '../interfaces/admin';
 import * as adminService from '../services/admin.service';
-import * as userService from '../services/user.service';
+// import * as userService from '../services/user.service';
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
 import { UserInfo } from '../interfaces/user';
@@ -15,9 +15,10 @@ export async function generateAuthToken(request: GenerateAuthRequest): Promise<A
   let user: Admin | UserInfo | undefined = undefined;
   if (roleType === RoleType.ADMIN) {
     user = (await adminService.getAdmins({ public_address: publicAddress }))[0];
-  } else if (roleType === RoleType.USER) {
-    user = await userService.getUser({ public_address: publicAddress });
   }
+  // else if (roleType === RoleType.USER) {
+  //   user = await userService.getUser({ public_address: publicAddress });
+  // }
   if (!user) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'User not found');
   }
@@ -29,9 +30,10 @@ export async function generateAuthToken(request: GenerateAuthRequest): Promise<A
   // Update Nonce
   if (roleType === RoleType.ADMIN) {
     await KnexHelper.updateAdmin(publicAddress, { nonce: Math.floor(Math.random() * 1000000) });
-  } else if (roleType === RoleType.USER) {
-    await KnexHelper.updateUser(publicAddress, { nonce: Math.floor(Math.random() * 1000000) });
   }
+  // else if (roleType === RoleType.USER) {
+  //   await KnexHelper.updateUser(publicAddress, { nonce: Math.floor(Math.random() * 1000000) });
+  // }
 
   return { token, user };
 }

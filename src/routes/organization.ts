@@ -6,6 +6,23 @@ import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 
 const router = express.Router();
 
+// Invite an organization
+router.post('/invites',
+  controller.handleInviteOrganization,
+);
+
+router.get('/invites',
+  controller.handleGetInvites,
+);
+
+router.delete('/invites/:inviteId',
+  controller.handleDeleteInvite,
+);
+
+router.post('/invites/:inviteId/resend',
+  controller.handleResendInvite,
+);
+
 // Add an organization
 router.post('/',
   multerUpload.fields([{ name: 'image', maxCount: 1 }, { name: 'banner', maxCount: 1 }]),

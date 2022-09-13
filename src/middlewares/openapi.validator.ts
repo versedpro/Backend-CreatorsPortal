@@ -12,13 +12,16 @@ export const ApiValidator = OpenApiValidator.middleware({
   validateRequests: true, // (default)
   validateResponses: false,
   validateSecurity: false,
-  ignoreUndocumented: false,
+  ignoreUndocumented: true,
   ignorePaths: (path: string) => {
-    if(path.startsWith('/api//users')) {
+    if (path.startsWith('/api//users')) {
       return true;
     }
     if (path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
+    }
+    if (path.endsWith('/answers')) {
+      return true;
     }
     const split = path.trim().split('/');
     if (split.length === 5 && split[1] === 'api' && split[3] === 'admin' && split[4].match(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))) {

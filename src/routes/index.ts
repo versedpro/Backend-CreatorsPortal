@@ -9,6 +9,7 @@ import collectionRoutes from './collection';
 import nftRoutes from './nft';
 import mintRoutes from './mint';
 import userRoutes from './user';
+import * as controller from '../controllers/organization.controller';
 
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
@@ -21,11 +22,14 @@ router.use(morgan('combined'));
 
 router.use('/admin', adminRoutes);
 router.use('/auth', authRoutes);
+router.get('/invites/verify', controller.handleVerifyInvite);
+
 router.use('/organizations/:organization_id/collections', jwtHelper.requirePermission(RoleType.ADMIN), collectionRoutes);
 router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organizationRoutes);
 router.use('/nft', nftRoutes);
 router.use('/mint', mintRoutes);
 router.use('/users', userRoutes);
+
 
 router.use(routeError);
 

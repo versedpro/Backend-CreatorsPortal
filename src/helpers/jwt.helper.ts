@@ -3,6 +3,9 @@ import { NextFunction, Response } from 'express';
 
 import { JwtConfig, JwtData, RoleType } from '../interfaces/jwt.config';
 import { IExpressRequest } from '../interfaces/i.express.request';
+import * as CacheHelper from '../helpers/cache.helper';
+import { db as knex } from '../../data/db';
+import { dbTables } from '../constants';
 
 // Example token
 // const tokenObject = {
@@ -15,12 +18,12 @@ import { IExpressRequest } from '../interfaces/i.express.request';
 //   publicKey: '',
 //   handleJsonResponse: (code, message) => {}
 // };
-const USER_TOKEN_EXPIRY_IN_SECONDS = 1814400; // 21 days
+export const USER_TOKEN_EXPIRY_IN_SECONDS = 1814400; // 21 days
 
 
 export class JwtHelper {
   private configOption: JwtConfig;
-  handleJsonResponse?: ( code: number, message: string) => void;
+  handleJsonResponse?: (code: number, message: string) => void;
 
   constructor(configOption: JwtConfig) {
     this.configOption = configOption;
@@ -34,7 +37,7 @@ export class JwtHelper {
     res.status(403).json({ error: true, message });
   }
 
-  async generateToken(params: JwtData, expiryInSeconds=USER_TOKEN_EXPIRY_IN_SECONDS) {
+  async generateToken(params: JwtData, expiryInSeconds = USER_TOKEN_EXPIRY_IN_SECONDS) {
     const { publicAddress, roleType, userId } = params;
     const encryptionKey = Buffer.from(this.configOption.publicKey, 'base64').toString();
     const options: jwt.SignOptions = {};
@@ -57,8 +60,28 @@ export class JwtHelper {
   async verifyToken(token: string): Promise<JwtData> {
     try {
       const result = await jwt.verify(token, Buffer.from(this.configOption.publicKey, 'base64').toString());
-      console.log(result);
-      return result as JwtData;
+      const decoded = result as JwtData;
+      if (decoded.roleType !== RoleType.USER) {
+        return decoded;
+      }
+      let valid = await CacheHelper.get(`jwt_${token}`);
+      if (valid === undefined) {
+        const existingValidTokenRes = await knex(dbTables.userTokens).select()
+          .where({
+            organization_id: decoded.userId,
+            token,
+            valid: true,
+          })
+          .whereRaw('expires_at > now ()')
+          .limit(1);
+        valid = existingValidTokenRes.length > 0;
+        await CacheHelper.set(`jwt_${token}`, valid);
+      }
+      if (valid) {
+        return decoded;
+      }
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid token');
     } catch (error) {
       throw {
         code: 403,

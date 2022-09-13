@@ -1,7 +1,7 @@
 import { UploadFilesData } from './organization';
 
 export interface UpdateUserRequest {
-  public_address: string;
+  organizationId: string;
   body: {
     username?: string;
     name?: string;
@@ -19,7 +19,8 @@ export interface SaveUserRequest {
 }
 
 export interface GetUserRequest {
-  public_address: string;
+  id?: string;
+  public_address?: string;
 }
 
 export interface UpdateUserDbRequest {

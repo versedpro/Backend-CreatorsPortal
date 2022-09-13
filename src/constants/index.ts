@@ -9,6 +9,10 @@ export const dbTables = {
   apiSecretKeys: 'api_secret_keys',
   firstPartyQuestionAnswers: 'first_party_question_answers',
   users: 'users',
+  organizationInvites: 'organization_invites',
+  organizationAuths: 'organization_auths',
+  passwordResets: 'password_resets',
+  userTokens: 'user_tokens',
 };
 // Will make env variables later.
 export const ADMIN_ADDRESSES: string[] = (<string>process.env.ADMIN_ADDRESSES || '').split(','); // Fill up with permitted admin wallet addresses
@@ -37,3 +41,13 @@ export const lunaFactoryAddresses: { [network: string]: string } = {
   ethereum: <string>process.env.ETHEREUM_NFT_FACTORY_CONTRACT_ADDRESS,
   polygon: <string>process.env.POLYGON_NFT_FACTORY_CONTRACT_ADDRESS,
 };
+
+export const sendgrid = {
+  apiKey: <string> process.env.SENDGRID_API_KEY,
+  senderEmail: <string> process.env.SENDGRID_SENDER_EMAIL,
+  templates: {
+    orgInvite: <string> process.env.SENDGRID_INVITE_TEMPLATE_ID,
+    forgotPassword: <string> process.env.SENDGRID_FORGOT_PASSWORD_TEMPLATE_ID,
+  }
+};
+export const FRONTEND_URL = <string> process.env.FRONTEND_URL;

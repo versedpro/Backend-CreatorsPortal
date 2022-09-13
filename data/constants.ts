@@ -6,4 +6,8 @@ export const dbTables = {
     apiSecretKeys: 'api_secret_keys',
     firstPartyQuestionAnswers: 'first_party_question_answers',
     users: 'users',
+    organizationInvites: 'organization_invites',
+    organizationAuths: 'organization_auths',
+    passwordResets: 'password_resets',
+    userTokens: 'user_tokens',
 };

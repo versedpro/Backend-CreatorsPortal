@@ -1,16 +1,24 @@
 import { Pagination } from './pagination';
+import { InviteStatus } from 'aws-sdk/clients/chime';
 
+export enum OnboardingType {
+  INVITED = 'INVITED',
+  ADMIN_CREATED = 'ADMIN_CREATED',
+}
 export interface UpdateOrganizationRequest {
   name?: string;
   type?: string;
   website?: string;
   twitter?: string;
   discord?: string;
-  admin_email?: string;
+  facebook?: string;
+  instagram?: string;
+  email?: string;
   admin_name?: string;
-  admin_wallet_address?: string;
+  public_address?: string;
   image?: string;
   banner?: string;
+  onboarding_type?: OnboardingType;
 }
 
 export interface OrganizationInfo {
@@ -19,21 +27,32 @@ export interface OrganizationInfo {
   type?: string;
   website?: string;
   twitter?: string;
+  facebook?: string;
+  instagram?: string;
   discord?: string;
-  admin_email?: string;
+  email?: string;
   admin_name?: string;
-  admin_wallet_address?: string;
+  public_address?: string;
   image?: string;
   banner?: string;
+  onboarding_type?: OnboardingType;
+  nonce?: string;
 }
 
 export interface GetOrganizationInfoRequest {
   id?: string;
+  email?: string;
+  public_address?: string;
+}
+
+export interface GetOrganizationAuthRequest {
+  id?: string;
+  email?: string;
 }
 
 export interface GetOrganizationsRequest {
   name?: string;
-  admin_email?: string;
+  email?: string;
   type?: string;
   page: number;
   size: number;
@@ -46,4 +65,37 @@ export interface GetOrganizationsResponse {
 
 export interface UploadFilesData {
   [fieldname: string]:Express.Multer.File[];
+}
+
+
+export interface CreateInviteRequest {
+  name: string;
+  email: string;
+}
+
+export interface InsertInviteDbRequest {
+  name: string;
+  email: string;
+  email_sent: boolean;
+  invite_code: string;
+  expires_at: Date;
+}
+export interface UpdateInviteDbRequest {
+  id: string;
+  invite_code: string;
+  expires_at: Date;
+}
+
+export interface GetInviteRequest {
+  id?: string;
+  email?: string;
+  invite_code?: string;
+}
+
+export interface GetInvitesRequest {
+  keyword?: string;
+  status?: InviteStatus;
+  date_sort?: string;
+  page: number;
+  size: number;
 }

@@ -13,6 +13,7 @@ import cors from 'cors';
 import ApiRoutes from './routes';
 import { ApiValidator } from './middlewares/openapi.validator';
 import apiDocsRoutes from './routes/api.docs';
+import * as CronHelper from './helpers/cron.helper';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
 
@@ -74,7 +75,6 @@ app.use(function (req, res, next) {
     const secureUrl = 'https://' + req.hostname + req.originalUrl;
     res.redirect(302, secureUrl);
   }
-
   next();
 });
 
@@ -86,5 +86,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     errors: err.errors,
   });
 });
+
+CronHelper.cronUpdateExpiredInvites();
+CronHelper.cronDeleteExpiredUserTokens();
 
 export default app;
