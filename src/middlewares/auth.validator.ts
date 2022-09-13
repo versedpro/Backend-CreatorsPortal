@@ -4,11 +4,6 @@ import { ADMIN_ADDRESSES } from '../constants';
 
 export const authValidator = () => {
   return Validator.validate([
-    param('user_type')
-      .exists()
-      .trim()
-      .isIn(['admin', 'user'])
-      .bail(),
     body('public_address', 'public_address is required')
       .exists()
       .trim()
