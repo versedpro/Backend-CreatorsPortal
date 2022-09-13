@@ -110,15 +110,6 @@ paths:
                 message: An admin public_address is required
 
   /auth/admin:
-    parameters:
-      - name: user_type
-        in: path
-        schema:
-          type: string
-          enum:
-            - admin
-            - user
-        required: true
     post:
       tags:
         - auth
