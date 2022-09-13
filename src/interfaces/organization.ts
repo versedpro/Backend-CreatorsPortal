@@ -5,6 +5,14 @@ export enum OnboardingType {
   INVITED = 'INVITED',
   ADMIN_CREATED = 'ADMIN_CREATED',
 }
+
+export interface CreateOrganizationRequest {
+  name: string;
+  email: string;
+  password: string;
+  image?: string;
+}
+
 export interface UpdateOrganizationRequest {
   name?: string;
   type?: string;

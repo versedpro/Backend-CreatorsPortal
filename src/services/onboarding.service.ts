@@ -78,7 +78,7 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
       type: 'BRAND',
       onboarding_type: OnboardingType.INVITED,
     };
-    organization = await orgService.addOrganization(newOrganization);
+    organization = await KnexHelper.insertOrganization(newOrganization);
     Logger.Info('SIGN UP: Saved New Organization');
   }
   // hash password

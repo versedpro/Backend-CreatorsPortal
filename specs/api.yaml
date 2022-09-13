@@ -156,43 +156,25 @@ paths:
             encoding:
               image:
                 contentType: image/png, image/jpeg
-              banner:
-                contentType: image/png, image/jpeg
             schema: # Request payload
               type: object
               required:
                 - name
-                - type
+                - email
+                - password
               properties:
                 name:
                   type: string
                   minLength: 3
                   maxLength: 30
-                type:
-                  $ref: '#/components/schemas/OrganizationType'
-                website:
-                  type: string
-                  format: uri
-                twitter:
-                  type: string
-                  format: uri
-                discord:
-                  type: string
-                  format: uri
                 email:
                   type: string
                   format: email
-                admin_name:
-                  type: string
-                admin_wallet_address:
-                  type: string
-                  pattern: (\b0x[a-fA-F0-9]{40}\b)
                 image:
                   type: string
                   format: binary
-                banner:
+                password:
                   type: string
-                  format: binary
 
       responses:
         '200':

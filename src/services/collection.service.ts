@@ -30,23 +30,27 @@ export async function uploadImages(folder: string, files: UploadFilesData, onlyN
   let collectionImage: string | undefined;
   let collectionBgHeader: string | undefined;
 
-  let itemIndex = 1;
-  if (!onlyNftImage) {
-    if (files['collection_image']) {
-      const file = files['collection_image'][0];
-      collectionImage = await s3UploadSingle(file, folder, file.fieldname);
+  try {
+    let itemIndex = 1;
+    if (!onlyNftImage) {
+      if (files['collection_image']) {
+        const file = files['collection_image'][0];
+        collectionImage = await s3UploadSingle(file, folder, file.fieldname);
+      }
+      if (files['collection_background_header']) {
+        const file = files['collection_background_header'][0];
+        collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
+      }
     }
-    if (files['collection_background_header']) {
-      const file = files['collection_background_header'][0];
-      collectionBgHeader = await s3UploadSingle(file, folder, file.fieldname);
-    }
-  }
 
-  if (files['image']) {
-    const file = files['image'][0];
-    const loc = await s3UploadSingle(file, folder, itemIndex.toString());
-    imageLocations.push(loc);
-    itemIndex++;
+    if (files['image']) {
+      const file = files['image'][0];
+      const loc = await s3UploadSingle(file, folder, itemIndex.toString());
+      imageLocations.push(loc);
+      itemIndex++;
+    }
+  } catch (err: any) {
+    Logger.Error(err.message || err);
   }
 
   return {

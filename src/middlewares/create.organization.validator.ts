@@ -1,5 +1,5 @@
 import { Validator } from './validator';
-import { body, param, query } from 'express-validator';
+import { body, query } from 'express-validator';
 
 export const createOrganizationValidator = () => {
   return Validator.validate([
@@ -8,40 +8,16 @@ export const createOrganizationValidator = () => {
       .trim()
       .isLength({ min: 3, max: 30 })
       .bail(),
-    body('type', 'type is required')
-      .exists()
-      .trim()
-      .isIn(['BRAND', 'COMMUNITY'])
-      .bail(),
-    body('website', 'Valid website url is required')
-      .optional()
-      .trim()
-      .isURL()
-      .bail(),
-    body('twitter', 'Valid twitter url is required')
-      .optional()
-      .trim()
-      .isURL()
-      .bail(),
-    body('discord', 'Valid discord url is required')
-      .optional()
-      .trim()
-      .isURL()
-      .bail(),
     body('email', 'Valid email is required')
       .optional()
       .trim()
       .isEmail()
+      .toLowerCase()
       .bail(),
-    param('admin_name')
-      .optional()
+    body('password', 'Password should be at least 8 characters and have at least one lowercase, uppercase, number, and symbol')
+      .exists()
       .trim()
-      .isLength({ min: 3, max: 30 })
-      .bail(),
-    body('public_address', 'Valid wallet address is required')
-      .optional()
-      .trim()
-      .matches(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))
+      .isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })
       .bail(),
   ]);
 };

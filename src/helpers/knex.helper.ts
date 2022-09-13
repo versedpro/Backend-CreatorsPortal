@@ -62,12 +62,7 @@ export class KnexHelper {
     const newOrg = {
       name: org.name,
       type: org.type,
-      website: org.website,
-      twitter: org.twitter,
-      discord: org.discord,
       email: org.email,
-      admin_name: org.admin_name,
-      public_address: org.public_address,
       onboarding_type: org.onboarding_type,
     };
     const result = await knex(dbTables.organizations).insert(newOrg, 'id');

@@ -2,7 +2,12 @@ import { Request, Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as orgService from '../services/organization.service';
 import { StatusCodes } from 'http-status-codes';
-import { CreateInviteRequest, UpdateOrganizationRequest, UploadFilesData } from '../interfaces/organization';
+import {
+  CreateInviteRequest,
+  CreateOrganizationRequest,
+  UpdateOrganizationRequest,
+  UploadFilesData
+} from '../interfaces/organization';
 import { Logger } from '../helpers/Logger';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
 import { inviteExistsError } from '../interfaces';
@@ -12,7 +17,7 @@ export async function handleAddOrganization(req: Request, res: ExpressResponse):
   Logger.Info('Create Organization request', req.body);
   try {
     const organization = await orgService.addOrganization(
-      req.body as UpdateOrganizationRequest,
+      req.body as CreateOrganizationRequest,
       req.files as UploadFilesData,
     );
 

@@ -1,10 +1,10 @@
 import {
-  CreateInviteRequest,
+  CreateInviteRequest, CreateOrganizationRequest,
   GetInviteRequest,
   GetInvitesRequest,
   GetOrganizationInfoRequest,
   GetOrganizationsRequest,
-  GetOrganizationsResponse,
+  GetOrganizationsResponse, OnboardingType,
   OrganizationInfo,
   UpdateOrganizationRequest,
   UploadFilesData
@@ -20,44 +20,81 @@ import randomstring from 'randomstring';
 import { inviteExistsError } from '../interfaces';
 import { Pagination } from '../interfaces/pagination';
 import { sendgridMail } from '../helpers/sendgrid.helper';
-import { FRONTEND_URL, sendgrid } from '../constants';
+import { dbTables, FRONTEND_URL, sendgrid } from '../constants';
+import bcrypt from 'bcrypt';
+import { db as knex } from '../../data/db';
 
 export async function uploadOrgImages(organizationId: string, files: UploadFilesData): Promise<{ image?: string, banner?: string }> {
   let imageUrl;
-  let bannerUrl;
+  // let bannerUrl;
 
-  const folderName = `${organizationId}/profile_images`;
-  if (files['image']) {
-    const file = files['image'][0];
-    imageUrl = await s3UploadSingle(file, folderName, `${file.fieldname}_${uuidv4()}`);
+  try {
+    const folderName = `${organizationId}/profile_images`;
+    if (files['image']) {
+      const file = files['image'][0];
+      imageUrl = await s3UploadSingle(file, folderName, `${file.fieldname}_${uuidv4()}`);
+    }
+    // if (files['banner']) {
+    //   const file = files['banner'][0];
+    //   bannerUrl = await s3UploadSingle(file, folderName, `${file.fieldname}_${uuidv4()}`);
+    // }
+  } catch (err: any) {
+    Logger.Error(err.message || err);
   }
-  if (files['banner']) {
-    const file = files['banner'][0];
-    bannerUrl = await s3UploadSingle(file, folderName, `${file.fieldname}_${uuidv4()}`);
-  }
-  return { image: imageUrl, banner: bannerUrl };
+  return { image: imageUrl, banner: undefined };
 }
 
-export async function addOrganization(request: UpdateOrganizationRequest, files?: UploadFilesData): Promise<OrganizationInfo> {
-  delete request.image;
-  delete request.banner;
-  const result = await KnexHelper.insertOrganization(request);
+export async function addOrganization(request: CreateOrganizationRequest, files?: UploadFilesData): Promise<OrganizationInfo> {
+  ////
+  const { name, password } = request;
+  let { email } = request;
+  email = email.toLowerCase();
+
+  const existingOrg = await KnexHelper.getSingleOrganizationInfo({ email });
+  if (existingOrg) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'Organization already exists');
+  }
+
+  const newOrganization = {
+    name,
+    email,
+    type: 'BRAND',
+    onboarding_type: OnboardingType.ADMIN_CREATED,
+  };
+  ////
+  const result = await KnexHelper.insertOrganization(newOrganization);
+
+  // hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+  // save password in auth table
+  const authToSave = {
+    organization_id: result[0].id,
+    email: email,
+    password: passwordHash,
+  };
+  await knex(dbTables.organizationAuths).insert(authToSave);
+  Logger.Info('ADMIN ADD ORGANIZATION: Saved New Auth with Hashed Password');
+
   if (files) {
     const organizationId = result[0].id;
-    const { image, banner } = await uploadOrgImages(organizationId, files);
+    const { image } = await uploadOrgImages(organizationId, files);
     const toSave = {};
     if (image) {
       // @ts-ignore
       toSave.image = image;
     }
-    if (banner) {
-      // @ts-ignore
-      toSave.banner = banner;
-    }
-    if (image || banner) {
+
+    if (image) {
       await KnexHelper.updateOrganization(organizationId, toSave);
     }
   }
+  sendgridMail.send({
+    from: sendgrid.senderEmail,
+    to: email,
+    subject: 'Your InsomniaLabs Creators Portal Account',
+    text: 'Your InsomniaLabs Creators Portal Account has been created, you can login with these details\n'
+      + `Email: ${email}\nPassword: ${password}`,
+  });
   return await getOrganization({ id: result[0].id });
 }
 
