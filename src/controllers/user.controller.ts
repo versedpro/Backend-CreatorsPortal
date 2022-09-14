@@ -4,6 +4,7 @@ import * as userService from '../services/user.service';
 import { StatusCodes } from 'http-status-codes';
 import { UploadFilesData } from '../interfaces/organization';
 import { IExpressRequest } from '../interfaces/i.express.request';
+import { GetUserRequest } from '../interfaces/user';
 //
 // export async function handleAddUser(req: Request, res: ExpressResponse): Promise<void> {
 //   try {
@@ -21,8 +22,15 @@ import { IExpressRequest } from '../interfaces/i.express.request';
 
 export async function handleGetUser(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
-    const { public_address: publicAddress } = req.params;
-    const user = await userService.getUser({ public_address: publicAddress!.toString() });
+    const { public_address, id } = req.params;
+    const query: GetUserRequest = {};
+    if (public_address) {
+      query.public_address = public_address;
+    }
+    if (id) {
+      query.id = id;
+    }
+    const user = await userService.getUser(query);
 
     return Response.success(res, {
       message: 'Successful',

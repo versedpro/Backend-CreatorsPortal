@@ -95,6 +95,39 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
+#  /connect-wallet:
+#    post:
+#      tags:
+#        - onboarding
+#      summary: Connect user wallet
+#      description: |
+#        1. Get the user Nonce by making an API request to get the user.
+#        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+#        3. Let the user sign this with their wallet.
+#        4. Send public_address and signature in request
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/AuthRequest'
+#      responses:
+#        '200':
+#          description: Ok
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/GenericResponse'
+#        '403':
+#          description: Forbidden
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#              example:
+#                error: true
+#                code: 403
+#                message: An admin public_address is required
+
   /me:
     get:
       tags:
@@ -847,3 +880,13 @@ components:
           type: string
         otp:
           type: string
+
+    AuthRequest:
+      type: object
+      properties:
+        public_address:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+        signature:
+          type: string
+          minLength: 10

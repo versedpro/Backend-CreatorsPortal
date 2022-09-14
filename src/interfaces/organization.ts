@@ -78,11 +78,13 @@ export interface UploadFilesData {
 
 export interface CreateInviteRequest {
   name: string;
+  contact_name: string;
   email: string;
 }
 
 export interface InsertInviteDbRequest {
   name: string;
+  contact_name: string;
   email: string;
   email_sent: boolean;
   invite_code: string;

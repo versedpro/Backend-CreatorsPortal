@@ -53,7 +53,7 @@ router.get(
 
 // Get user
 router.get(
-  '/:public_address',
+  '/:id',
   jwtHelper.requirePermission(RoleType.USER),
   controller.handleGetUser,
 );

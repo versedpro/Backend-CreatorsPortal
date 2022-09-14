@@ -7,6 +7,7 @@ export enum OrgInviteStatus {
 export interface OrgInvite {
   id: string;
   name: string;
+  contact_name: string;
   email: string;
   email_sent: boolean;
   invite_code: string;

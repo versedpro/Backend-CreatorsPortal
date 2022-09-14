@@ -131,6 +131,7 @@ export async function updateOrganization(organization_id: string, request: Updat
 export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite> {
   request.name = request.name.trim();
   request.email = request.email.trim();
+  request.contact_name = request.contact_name.trim();
   // expires in 30 days
   const existingRes = await KnexHelper.getOrganizationInvite({ email: request.email });
   if (existingRes.length > 0) {
@@ -148,13 +149,14 @@ export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite
     to: request.email,
     templateId: sendgrid.templates.orgInvite,
     dynamicTemplateData: {
-      name: request.name,
+      name: request.contact_name,
       link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${request.email}`
     }
   });
 
   const result = await KnexHelper.insertOrganizationInvite({
     name: request.name,
+    contact_name: request.contact_name,
     email: request.email,
     expires_at: new Date(expiresAt),
     invite_code: inviteCode,
@@ -202,7 +204,7 @@ export async function resendInvite(id: string): Promise<OrgInvite> {
     to: invite.email,
     templateId: sendgrid.templates.orgInvite,
     dynamicTemplateData: {
-      name: invite.name,
+      name: invite.contact_name || invite.name,
       link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${invite.email}`
     }
   });
