@@ -89,11 +89,16 @@ export async function addOrganization(request: CreateOrganizationRequest, files?
     }
   }
   sendgridMail.send({
-    from: sendgrid.senderEmail,
+    from: sendgrid.sender,
     to: email,
-    subject: 'Your InsomniaLabs Creators Portal Account',
-    text: 'Your InsomniaLabs Creators Portal Account has been created, you can login with these details\n'
-      + `Email: ${email}\nPassword: ${password}`,
+    templateId: sendgrid.templates.adminCreatedAccount,
+    dynamicTemplateData: {
+      name: '',
+      org_name: name,
+      email,
+      password,
+      signin_link: `${FRONTEND_URL}/signin`,
+    },
   });
   return await getOrganization({ id: result[0].id });
 }
@@ -145,12 +150,12 @@ export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite
 
   // Send email invite to organization using Sendgrid
   await sendgridMail.send({
-    from: sendgrid.senderEmail,
+    from: sendgrid.sender,
     to: request.email,
     templateId: sendgrid.templates.orgInvite,
     dynamicTemplateData: {
       name: request.contact_name,
-      link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${request.email}`
+      signup_link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${request.email}`
     }
   });
 
@@ -200,12 +205,12 @@ export async function resendInvite(id: string): Promise<OrgInvite> {
 
   // Send email invite to organization using Sendgrid
   await sendgridMail.send({
-    from: sendgrid.senderEmail,
+    from: sendgrid.sender,
     to: invite.email,
     templateId: sendgrid.templates.orgInvite,
     dynamicTemplateData: {
       name: invite.contact_name || invite.name,
-      link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${invite.email}`
+      signup_link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${invite.email}`
     }
   });
 

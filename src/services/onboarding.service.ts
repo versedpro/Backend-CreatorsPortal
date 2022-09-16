@@ -8,7 +8,7 @@ import {
   UserAuth
 } from '../interfaces/onboarding';
 import { db as knex } from '../../data/db';
-import { dbTables, JWT_PUBLIC_KEY, sendgrid } from '../constants';
+import { dbTables, FRONTEND_URL, JWT_PUBLIC_KEY, sendgrid } from '../constants';
 import * as orgService from './organization.service';
 import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
@@ -156,6 +156,7 @@ export async function forgotPassword(email: string): Promise<boolean> {
   if (!auth) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'User with email not found');
   }
+  const organization = await KnexHelper.getSingleOrganizationInfo({ email });
   // generate otp
   const otp = randomstring.generate({
     length: 6,
@@ -175,11 +176,12 @@ export async function forgotPassword(email: string): Promise<boolean> {
   });
   // send email with OTP
   await sendgridMail.send({
-    from: sendgrid.senderEmail,
+    from: sendgrid.sender,
     to: email,
     templateId: sendgrid.templates.forgotPassword,
     dynamicTemplateData: {
-      otp,
+      name: organization?.contact_name || '',
+      verify_code: otp,
     }
   });
   return true;
@@ -223,10 +225,21 @@ export async function changePassword(request: ChangePasswordRequest): Promise<bo
     .returning(['token']);
   Logger.Info('deletedTokens');
   Logger.Info(deletedTokens);
+  // update token expiry in cache
   for (const body of deletedTokens) {
     await CacheHelper.del(`jwt_${body.token}`);
   }
-  // update token expiry in cache
-  // generate and save new token
+  const organization = await KnexHelper.getSingleOrganizationInfo({ email });
+
+  await sendgridMail.send({
+    from: sendgrid.sender,
+    to: email,
+    templateId: sendgrid.templates.passwordResetSuccessful,
+    dynamicTemplateData: {
+      name: organization?.contact_name || '',
+      reset_password_link: `${FRONTEND_URL}/password-reset`,
+    }
+  });
+
   return true;
 }

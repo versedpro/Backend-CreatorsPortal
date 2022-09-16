@@ -44,10 +44,15 @@ export const lunaFactoryAddresses: { [network: string]: string } = {
 
 export const sendgrid = {
   apiKey: <string> process.env.SENDGRID_API_KEY,
-  senderEmail: <string> process.env.SENDGRID_SENDER_EMAIL,
+  sender: {
+    name: 'Insomnia Labs',
+    email: <string> process.env.SENDGRID_SENDER_EMAIL,
+  },
   templates: {
     orgInvite: <string> process.env.SENDGRID_INVITE_TEMPLATE_ID,
     forgotPassword: <string> process.env.SENDGRID_FORGOT_PASSWORD_TEMPLATE_ID,
+    adminCreatedAccount: <string> process.env.SENDGRID_ADMIN_CREATED_ACCOUNT_TEMPLATE_ID,
+    passwordResetSuccessful: <string> process.env.SENDGRID_PASSWORD_RESET_SUCCESS_TEMPLATE_ID,
   }
 };
 export const FRONTEND_URL = <string> process.env.FRONTEND_URL;

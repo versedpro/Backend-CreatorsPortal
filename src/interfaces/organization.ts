@@ -45,6 +45,7 @@ export interface OrganizationInfo {
   banner?: string;
   onboarding_type?: OnboardingType;
   nonce?: string;
+  contact_name?: string;
 }
 
 export interface GetOrganizationInfoRequest {
