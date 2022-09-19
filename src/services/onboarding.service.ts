@@ -78,7 +78,11 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
       type: 'BRAND',
       onboarding_type: OnboardingType.INVITED,
     };
-    organization = await KnexHelper.insertOrganization(newOrganization);
+    const { id: newOrgId } = await KnexHelper.insertOrganization(newOrganization);
+    organization = await KnexHelper.getSingleOrganizationInfo({ id: newOrgId });
+    if (!organization) {
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'User not created');
+    }
     Logger.Info('SIGN UP: Saved New Organization');
   }
   // hash password
