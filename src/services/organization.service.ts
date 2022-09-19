@@ -23,6 +23,7 @@ import { sendgridMail } from '../helpers/sendgrid.helper';
 import { dbTables, FRONTEND_URL, sendgrid } from '../constants';
 import bcrypt from 'bcrypt';
 import { db as knex } from '../../data/db';
+import { forgotPassword } from './onboarding.service';
 
 export async function uploadOrgImages(organizationId: string, files: UploadFilesData): Promise<{ image?: string, banner?: string }> {
   let imageUrl;
@@ -46,7 +47,11 @@ export async function uploadOrgImages(organizationId: string, files: UploadFiles
 
 export async function addOrganization(request: CreateOrganizationRequest, files?: UploadFilesData): Promise<OrganizationInfo> {
   ////
-  const { name, password } = request;
+  const { name } = request;
+  const password = randomstring.generate({
+    length: 25,
+    charset: 'alphanumeric',
+  });
   let { email } = request;
   email = email.toLowerCase();
 
@@ -68,7 +73,7 @@ export async function addOrganization(request: CreateOrganizationRequest, files?
   const passwordHash = await bcrypt.hash(password, 10);
   // save password in auth table
   const authToSave = {
-    organization_id: result[0].id,
+    organization_id: result.id,
     email: email,
     password: passwordHash,
   };
@@ -76,7 +81,7 @@ export async function addOrganization(request: CreateOrganizationRequest, files?
   Logger.Info('ADMIN ADD ORGANIZATION: Saved New Auth with Hashed Password');
 
   if (files) {
-    const organizationId = result[0].id;
+    const organizationId = result.id;
     const { image } = await uploadOrgImages(organizationId, files);
     const toSave = {};
     if (image) {
@@ -88,19 +93,8 @@ export async function addOrganization(request: CreateOrganizationRequest, files?
       await KnexHelper.updateOrganization(organizationId, toSave);
     }
   }
-  sendgridMail.send({
-    from: sendgrid.sender,
-    to: email,
-    templateId: sendgrid.templates.adminCreatedAccount,
-    dynamicTemplateData: {
-      name: '',
-      org_name: name,
-      email,
-      password,
-      signin_link: `${FRONTEND_URL}/signin`,
-    },
-  });
-  return await getOrganization({ id: result[0].id });
+  await forgotPassword(email, true);
+  return await getOrganization({ id: result.id });
 }
 
 export async function getOrganization(request: GetOrganizationInfoRequest): Promise<OrganizationInfo> {

@@ -160,7 +160,7 @@ export async function handleResendInvite(req: Request, res: ExpressResponse): Pr
 export async function handleVerifyInvite(req: Request, res: ExpressResponse): Promise<void> {
   try {
     const { invite_code } = req.query;
-    const invite = await orgService.getInvite({ invite_code: <string> invite_code });
+    const invite = await orgService.getInvite({ invite_code: <string>invite_code });
     return Response.success(res, {
       message: 'Successful',
       response: invite,

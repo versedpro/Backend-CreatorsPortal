@@ -9,7 +9,6 @@ export enum OnboardingType {
 export interface CreateOrganizationRequest {
   name: string;
   email: string;
-  password: string;
   image?: string;
 }
 

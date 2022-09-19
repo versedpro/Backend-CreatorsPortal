@@ -58,7 +58,7 @@ export class KnexHelper {
   /*
   * Organizations CRUD
   * */
-  static async insertOrganization(org: UpdateOrganizationRequest): Promise<any> {
+  static async insertOrganization(org: UpdateOrganizationRequest): Promise<{ id: string }> {
     const newOrg = {
       name: org.name,
       type: org.type,
@@ -67,7 +67,7 @@ export class KnexHelper {
     };
     const result = await knex(dbTables.organizations).insert(newOrg, 'id');
     Logger.Info(result);
-    return result;
+    return result[0];
   }
 
   static async getOrganizationInfo(request: GetOrganizationInfoRequest): Promise<OrganizationInfo[]> {

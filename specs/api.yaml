@@ -161,7 +161,6 @@ paths:
               required:
                 - name
                 - email
-                - password
               properties:
                 name:
                   type: string
@@ -173,8 +172,6 @@ paths:
                 image:
                   type: string
                   format: binary
-                password:
-                  type: string
 
       responses:
         '200':

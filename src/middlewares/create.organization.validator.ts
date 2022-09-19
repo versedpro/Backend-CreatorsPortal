@@ -14,11 +14,6 @@ export const createOrganizationValidator = () => {
       .isEmail()
       .toLowerCase()
       .bail(),
-    body('password', 'Password should be at least 8 characters and have at least one lowercase, uppercase, number, and symbol')
-      .exists()
-      .trim()
-      .isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })
-      .bail(),
   ]);
 };
 
