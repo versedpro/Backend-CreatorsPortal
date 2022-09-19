@@ -20,7 +20,9 @@ router.post('/',
   ),
   cleanUpMulterFiles,
   createCollectionExpValidator(),
-  createCollectionValidator, controller.handleAddCollection);
+  createCollectionValidator,
+  controller.handleAddAdminCollection
+);
 
 router.get('/', getCollectionExpValidator(), controller.handleGetCollections);
 
@@ -29,7 +31,6 @@ router.get('/:collection_id', controller.handleGetCollectionById);
 router.put('/:collection_id',
   multerUpload.fields([
     { name: 'collection_image', maxCount: 1 },
-    { name: 'collection_background_header', maxCount: 1 },
   ]),
   cleanUpMulterFiles,
   updateCollectionExpValidator(),

@@ -802,6 +802,15 @@ components:
           description: Link to T&C
           type: string
           format: uri
+        payment_option:
+          $ref: '#/components/schemas/PaymentOption'
+        fees_estimate_crypto:
+          type: string
+        fees_estimate_usd:
+          type: string
+        payment_client_id:
+          description: Stripe client secret
+          type: string
         created_at:
           type: string
           format: 'date-time'
@@ -840,6 +849,8 @@ components:
         - DEPLOYMENT_IN_PROGRESS
         - DEPLOYED
         - DEPLOYMENT_FAILED
+        - PAYMENT_PENDING
+        - PAYMENT_FAILED
 
     CollectionSocialLink:
       type: object
@@ -890,3 +901,9 @@ components:
         signature:
           type: string
           minLength: 10
+
+    PaymentOption:
+      type: string
+      enum:
+        - CRYPTO
+        - CREDIT_CARD

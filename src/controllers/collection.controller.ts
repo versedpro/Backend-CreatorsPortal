@@ -5,13 +5,27 @@ import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
-import { CreateCollectionData, CreatorType, NftCollectionStatus, UpdateCollectionData } from '../interfaces/collection';
+import {
+  CreateCollectionData,
+  CreatorType,
+  NftCollectionStatus,
+  PaymentOption,
+  UpdateCollectionData
+} from '../interfaces/collection';
 import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
 import { UploadFilesData } from '../interfaces/organization';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
 
-export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+export async function handleAddUserCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  return handleAddCollection(req, res, CreatorType.USER);
+}
+
+export async function handleAddAdminCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  return handleAddCollection(req, res, CreatorType.ADMIN);
+}
+
+export async function handleAddCollection(req: IExpressRequest, res: ExpressResponse, creatorType: CreatorType): Promise<void> {
   Logger.Info('Create Collection request', req.body);
   try {
     const creatorId = req.params.organization_id || req.userId;
@@ -35,7 +49,9 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     data.understand_irreversible_action = JSON.parse(req.body.understand_irreversible_action || false);
     data.track_ip_addresses = JSON.parse(req.body.track_ip_addresses || false);
     data.create_contract = JSON.parse(req.body.create_contract || false);
-
+    Logger.Info('got here 1');
+    data.payment_option = req.body.payment_option || PaymentOption.CRYPTO;
+    Logger.Info('got here 2');
     const {
       chain,
       name,
@@ -101,7 +117,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     const collectionArr = await collectionService.addCollection({
       creatorId: creatorId!,
-      creatorType: CreatorType.ORGANIZATION,
+      creatorType,
       data,
       files: req.files as UploadFilesData,
     });
@@ -130,7 +146,7 @@ export async function handleGetCollections(req: IExpressRequest, res: ExpressRes
 
     const response = await collectionService.getOrganizationCollections({
       creatorId: <string>creatorId,
-      creatorType: CreatorType.ORGANIZATION,
+      creatorType: CreatorType.ADMIN,
       name: <string>name,
       status: status ? <string>status as NftCollectionStatus : undefined,
       oldest_date: oldest_date ? parseInt(<string>oldest_date) : undefined,
@@ -155,7 +171,7 @@ export async function handleGetCollectionById(req: IExpressRequest, res: Express
 
     const response = await collectionService.getCollectionByIdAndCreator({
       creatorId: creatorId!,
-      creatorType: CreatorType.ORGANIZATION,
+      creatorType: CreatorType.ADMIN,
       collectionId
     });
 
@@ -178,7 +194,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
 
     const collectionArr = await collectionService.updateCollection({
       creatorId: creatorId!,
-      creatorType: CreatorType.ORGANIZATION,
+      creatorType: CreatorType.ADMIN,
       collectionId,
       data,
       files: req.files as UploadFilesData,

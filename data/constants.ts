@@ -10,4 +10,6 @@ export const dbTables = {
     organizationAuths: 'organization_auths',
     passwordResets: 'password_resets',
     userTokens: 'user_tokens',
+    deployCryptoPayments: 'deployment_crypto_payments',
+    deployCashPayments: 'deployment_cash_payments',
 };

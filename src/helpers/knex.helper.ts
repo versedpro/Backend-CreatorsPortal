@@ -19,7 +19,7 @@ import { Pagination } from '../interfaces/pagination';
 import {
   CollectionInfo,
   DbGetOrganizationCollectionsRequest,
-  DbUpdateCollectionData,
+  DbUpdateCollectionData, DbUpdateCollectionPayment,
   FirstPartyQuestionAnswerInsertData,
   GetCollectionsResponse
 } from '../interfaces/collection';
@@ -178,6 +178,12 @@ export class KnexHelper {
     return knex(dbTables.nftCollections)
       .where({ id: collectionId })
       .update({ status: 'DEPLOYED', contract_address: contractAddress });
+  }
+
+  static async updateNftCollectionPayment(collectionId: string, body: DbUpdateCollectionPayment): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collectionId })
+      .update(body);
   }
 
   static async getAllNftCollections(): Promise<CollectionInfo[]> {
