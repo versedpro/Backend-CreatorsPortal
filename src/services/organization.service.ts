@@ -23,6 +23,7 @@ import { sendgridMail } from '../helpers/sendgrid.helper';
 import { dbTables, FRONTEND_URL, sendgrid } from '../constants';
 import bcrypt from 'bcrypt';
 import { db as knex } from '../../data/db';
+import { forgotPassword } from './onboarding.service';
 
 export async function uploadOrgImages(organizationId: string, files: UploadFilesData): Promise<{ image?: string, banner?: string }> {
   let imageUrl;
@@ -46,7 +47,11 @@ export async function uploadOrgImages(organizationId: string, files: UploadFiles
 
 export async function addOrganization(request: CreateOrganizationRequest, files?: UploadFilesData): Promise<OrganizationInfo> {
   ////
-  const { name, password } = request;
+  const { name } = request;
+  const password = randomstring.generate({
+    length: 25,
+    charset: 'alphanumeric',
+  });
   let { email } = request;
   email = email.toLowerCase();
 
@@ -88,18 +93,7 @@ export async function addOrganization(request: CreateOrganizationRequest, files?
       await KnexHelper.updateOrganization(organizationId, toSave);
     }
   }
-  sendgridMail.send({
-    from: sendgrid.sender,
-    to: email,
-    templateId: sendgrid.templates.adminCreatedAccount,
-    dynamicTemplateData: {
-      name: '',
-      org_name: name,
-      email,
-      password,
-      signin_link: `${FRONTEND_URL}/signin`,
-    },
-  });
+  await forgotPassword(email, true);
   return await getOrganization({ id: result.id });
 }
 

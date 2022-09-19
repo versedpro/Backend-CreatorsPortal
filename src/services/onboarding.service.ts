@@ -154,7 +154,7 @@ export async function loginUser(request: LoginRequest): Promise<SignUpResponse> 
   };
 }
 
-export async function forgotPassword(email: string): Promise<boolean> {
+export async function forgotPassword(email: string, isAdminSender = false): Promise<boolean> {
   // find auth by email
   const auth = await KnexHelper.getOrganizationAuth({ email });
   if (!auth) {
@@ -179,13 +179,15 @@ export async function forgotPassword(email: string): Promise<boolean> {
     expires_at: new Date(Date.now() + 600000),
   });
   // send email with OTP
-  await sendgridMail.send({
+  sendgridMail.send({
     from: sendgrid.sender,
     to: email,
-    templateId: sendgrid.templates.forgotPassword,
+    templateId: isAdminSender ? sendgrid.templates.adminCreatedAccount : sendgrid.templates.forgotPassword,
     dynamicTemplateData: {
       name: organization?.contact_name || '',
       verify_code: otp,
+      reset_link: `${FRONTEND_URL}/reset?email=${email}`,
+      org_name: organization?.name,
     }
   });
   return true;
@@ -241,7 +243,7 @@ export async function changePassword(request: ChangePasswordRequest): Promise<bo
     templateId: sendgrid.templates.passwordResetSuccessful,
     dynamicTemplateData: {
       name: organization?.contact_name || '',
-      reset_password_link: `${FRONTEND_URL}/password-reset`,
+      reset_password_link: `${FRONTEND_URL}/login`,
     }
   });
 
