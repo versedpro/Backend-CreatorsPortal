@@ -1,6 +1,6 @@
 import { DecodedCallData, LogEvent, MethodAbi, RpcLogEvent } from '../interfaces/contract';
 import { BigNumber, ethers } from 'ethers';
-import { toNumber } from './string.utils';
+import { toIntNumber } from './string.utils';
 import { Logger } from './Logger';
 
 export function convertRpcLogEvents(events: RpcLogEvent[], contractAbi: MethodAbi[]): LogEvent[] {
@@ -13,11 +13,11 @@ export function convertRpcLogEvents(events: RpcLogEvent[], contractAbi: MethodAb
     const logEvent: LogEvent = {
       address: event.address,
       topics: event.topics,
-      blockNumber: toNumber(event.blockNumber),
+      blockNumber: toIntNumber(event.blockNumber),
       transactionHash: event.transactionHash,
-      transactionIndex: toNumber(event.transactionIndex),
+      transactionIndex: toIntNumber(event.transactionIndex),
       blockHash: event.blockHash,
-      logIndex: toNumber(event.logIndex),
+      logIndex: toIntNumber(event.logIndex),
     };
     // Decode log
     const decodedCallData: DecodedCallData = {};

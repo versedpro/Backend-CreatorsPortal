@@ -12,4 +12,5 @@ export const dbTables = {
     userTokens: 'user_tokens',
     deployCryptoPayments: 'deployment_crypto_payments',
     deployCashPayments: 'deployment_cash_payments',
+    stripeCustomers: 'stripe_customers',
 };

@@ -95,38 +95,38 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
-#  /connect-wallet:
-#    post:
-#      tags:
-#        - onboarding
-#      summary: Connect user wallet
-#      description: |
-#        1. Get the user Nonce by making an API request to get the user.
-#        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
-#        3. Let the user sign this with their wallet.
-#        4. Send public_address and signature in request
-#      requestBody:
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/AuthRequest'
-#      responses:
-#        '200':
-#          description: Ok
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/GenericResponse'
-#        '403':
-#          description: Forbidden
-#          content:
-#            application/json:
-#              schema:
-#                type: object
-#              example:
-#                error: true
-#                code: 403
-#                message: An admin public_address is required
+  #  /connect-wallet:
+  #    post:
+  #      tags:
+  #        - onboarding
+  #      summary: Connect user wallet
+  #      description: |
+  #        1. Get the user Nonce by making an API request to get the user.
+  #        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+  #        3. Let the user sign this with their wallet.
+  #        4. Send public_address and signature in request
+  #      requestBody:
+  #        content:
+  #          application/json:
+  #            schema:
+  #              $ref: '#/components/schemas/AuthRequest'
+  #      responses:
+  #        '200':
+  #          description: Ok
+  #          content:
+  #            application/json:
+  #              schema:
+  #                $ref: '#/components/schemas/GenericResponse'
+  #        '403':
+  #          description: Forbidden
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: object
+  #              example:
+  #                error: true
+  #                code: 403
+  #                message: An admin public_address is required
 
   /me:
     get:
@@ -294,7 +294,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetUserCollectionResponse'
+                $ref: '#/components/schemas/CreateUserCollectionResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
     get:
@@ -467,6 +467,71 @@ paths:
                 error: true
                 code: 403
                 message: An user auth key is required
+
+  /payments/{collection_id}/stripe-client-secret:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: save_card
+        in: query
+        schema:
+          type: boolean
+          default: false
+        required: false
+    get:
+      tags:
+        - nft_collection
+      summary: Get Stripe Client secret that is used for payment
+      description: |
+        Query param 'save_card' indicates if thge user wants to save the card for later.
+      operationId: getStripeClientSecret
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStripeClientSecretResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /payments/{collection_id}/charge-card:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - nft_collection
+      summary: If user selects an existing card, send the card id over
+      operationId: chargeCard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - card_id
+              properties:
+                card_id:
+                  type: string
+      responses:
+        '200':
+          description: |
+            If status is REQUIRES_AUTH, see Section 6 of https://stripe.com/docs/payments/save-during-payment-cards-only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeCardResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
 
 components:
   securitySchemes:
@@ -841,6 +906,21 @@ components:
             data:
               $ref: '#/components/schemas/UserNftCollectionInfo'
 
+    CreateUserCollectionResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/UserNftCollectionInfo'
+                - type: object
+                  properties:
+                    payment_cards:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PaymentCard'
+
     NftCollectionStatus:
       type: string
       enum:
@@ -907,3 +987,59 @@ components:
       enum:
         - CRYPTO
         - CREDIT_CARD
+
+    PaymentCard:
+      type: object
+      properties:
+        id:
+          type: string
+        brand:
+          type: string
+        exp_month:
+          type: number
+        exp_year:
+          type: number
+        last4:
+          type: string
+
+    GetStripeClientSecretResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required:
+                - organization_id
+                - client_secret
+              properties:
+                organization_id:
+                  type: string
+                client_secret:
+                  type: string
+
+    ChargeCardResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required:
+                - status
+                - organization_id
+                - card_id
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - SUCCESSFUL
+                    - REQUIRES_AUTHENTICATION
+                    - FAILED
+                organization_id:
+                  type: string
+                client_secret:
+                  type: string
+                card_id:
+                  type: string
+

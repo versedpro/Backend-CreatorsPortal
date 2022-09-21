@@ -25,6 +25,10 @@ import { LogEvent } from '../interfaces/contract';
 import { OrganizationInfo, UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
 import * as CacheHelper from '../helpers/cache.helper';
+import axios from 'axios';
+import { stripeConfig } from '../constants';
+import Stripe from 'stripe';
+import { StripeCard } from '../interfaces/stripe.card';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -70,15 +74,14 @@ export async function getCreatorId(id: string): Promise<string> {
   throw new CustomError(StatusCodes.NOT_FOUND, 'Creator not found');
 }
 
-export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo[]> {
+export async function addCollection(request: CreateCollectionRequest): Promise<{ collection?: CollectionInfo, stripe_cards: StripeCard[] }> {
   const { data, files } = request;
   const collectionId = data.collection_id || uuidv4();
 
   // Do some collection validation
   if (data.collection_id) {
-    const collections = await KnexHelper.getNftCollection(collectionId);
-    if (collections.length > 0) {
-      const collection = collections[0];
+    const collection = await KnexHelper.getNftCollectionByID(collectionId);
+    if (collection) {
       if (collection.status === NftCollectionStatus.DEPLOYED) {
         throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: Collection already deployed');
       }
@@ -157,18 +160,21 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
 
   await KnexHelper.upsertMetadata(nftMetadata);
 
-  const collections = await KnexHelper.getNftCollection(collectionId);
+  const collection = await KnexHelper.getNftCollectionByID(collectionId);
   if ((request.creatorType === CreatorType.ADMIN) && data.create_contract) {
-    await callContract(collections[0]);
-    return await KnexHelper.getNftCollection(collectionId);
+    await callContract(collection!);
+    const newCollect = await KnexHelper.getNftCollectionByID(collectionId);
+    return { collection: newCollect, stripe_cards: [] };
   } else if ((request.creatorType === CreatorType.USER) && data.create_contract) {
     // Estimate gas
-    await getGasPrice(collections[0], request.data.payment_option);
+    const stripeCards = await getGasPrice(collection!, request.data.payment_option);
     // if payment method is credit_card: convert Estimate to USD
     // return estimate with response.
-    return await KnexHelper.getNftCollection(collectionId);
+    const newCollect = await KnexHelper.getNftCollectionByID(collectionId);
+    return { collection: newCollect, stripe_cards: stripeCards };
+
   }
-  return collections;
+  return { collection, stripe_cards: [] };
 }
 
 async function getDeployRequestBody(collection: CollectionInfo): Promise<any> {
@@ -204,29 +210,81 @@ async function getDeployRequestBody(collection: CollectionInfo): Promise<any> {
   }
 }
 
-async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOption): Promise<void> {
+async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOption): Promise<StripeCard[]> {
   const contractService = ContractServiceRegistry.getService(collection.chain);
   const requestBody = await getDeployRequestBody(collection);
-  if (requestBody) {
+  if (requestBody && collection.id) {
+    const stripeCards: StripeCard[] = [];
     try {
+      let gasEstimateUSD;
       const gasPrice = await contractService.estimateDeploymentGas(requestBody);
       Logger.Info(`Gas Price to pay is ${gasPrice}`);
       if (paymentOption === PaymentOption.CREDIT_CARD) {
         Logger.Info('Paying with credit card');
-        // const ethInUSD
         // Get estimate in USD.
-        // https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD
+        const ethToUSD: number = (await axios.get('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD')).data.USD;
+        gasEstimateUSD = (parseFloat(gasPrice!) * ethToUSD).toFixed(2);
         // Create stripe payment client
+        const stripe = new Stripe(stripeConfig.secretKey, {
+          apiVersion: '2022-08-01',
+        });
+
+        const organization = await KnexHelper.getSingleOrganizationInfo({ id: collection.organization_id });
+        const stripeCustomerId = await KnexHelper.getStripeCustomerId(organization?.id!);
+        if (stripeCustomerId) {
+          let hasMore = true;
+          while (hasMore) {
+            const existingCardRes = await stripe.paymentMethods.list({
+              customer: stripeCustomerId,
+              type: 'card',
+            });
+            existingCardRes.data.forEach(method => {
+              if (method.card) {
+                stripeCards.push({
+                  id: method.id,
+                  brand: method.card.brand,
+                  exp_month: method.card.exp_month,
+                  exp_year: method.card.exp_year,
+                  last4: method.card.last4,
+                });
+              }
+            });
+            hasMore = existingCardRes.has_more;
+          }
+        }
+        /// TODO: move payment intent to another endpoint
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: parseFloat(gasEstimateUSD),
+          currency: 'usd',
+          payment_method_types: [
+            'card',
+            'digital wallets'
+          ],
+          receipt_email: organization?.email,
+          metadata: {
+            collection_id: collection.id,
+            organization_id: collection.organization_id!,
+          }
+        });
+        ///
+
       }
-      await KnexHelper.updateNftCollectionPayment(collection.id!, {
+      const paymentUpdate = {
         fees_estimate_crypto: gasPrice!.toString(),
-        status: NftCollectionStatus.PAYMENT_PENDING,
+        fees_estimate_usd: gasEstimateUSD,
         payment_option: paymentOption,
-      });
+      };
+      if (paymentOption === PaymentOption.CRYPTO) {
+        // @ts-ignore
+        paymentUpdate.status = NftCollectionStatus.PAYMENT_PENDING;
+      }
+      await KnexHelper.updateNftCollectionPayment(collection.id, paymentUpdate);
+      return stripeCards;
     } catch (err: any) {
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Could not estimate gas fees');
     }
   }
+  return [];
 }
 
 async function callContract(collection: CollectionInfo) {
@@ -380,7 +438,7 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
   });
 }
 
-export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo[]> {
+export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo | undefined> {
   const { creatorId, collectionId, data, files } = request;
 
   Logger.Info('files', files);
@@ -427,7 +485,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   const cacheKey = `mint_info_${collectionId}`;
   await CacheHelper.del(cacheKey);
   await CacheHelper.del(`Collection_Data_${collectionId}`);
-  return await KnexHelper.getNftCollection(collectionId);
+  return await KnexHelper.getNftCollectionByID(collectionId);
 }
 
 export async function saveAnsweredQuestions(body: AnswerRequest): Promise<FirstPartyQuestionAnswer[]> {

@@ -191,11 +191,14 @@ export class KnexHelper {
     return result as CollectionInfo[];
   }
 
-  static async getNftCollection(id: string): Promise<CollectionInfo[]> {
+  static async getNftCollectionByID(id: string): Promise<CollectionInfo | undefined> {
     const result = await knex(dbTables.nftCollections).select().where({
       id,
     }).limit(1);
-    return result as CollectionInfo[];
+    if (result.length === 0) {
+      return;
+    }
+    return result[0];
   }
 
   static async getNftCollectionByParams(params: any): Promise<CollectionInfo[]> {
@@ -391,5 +394,23 @@ export class KnexHelper {
       return undefined;
     }
     return res[0] as unknown as UserAuth;
+  }
+
+  static async saveStripeCustomerId(body: { organizationId: string, customerId: string }): Promise<boolean> {
+    return knex(dbTables.stripeCustomers)
+      .insert({
+        organization_id: body.organizationId,
+        customer_id: body.customerId,
+      });
+
+  }
+
+  static async getStripeCustomerId(organizationId: string): Promise<string | undefined> {
+    const res = await knex(dbTables.stripeCustomers).select()
+      .where({ organization_id: organizationId }).limit(1);
+    if (res.length === 0) {
+      return undefined;
+    }
+    return res[0].customer_id;
   }
 }

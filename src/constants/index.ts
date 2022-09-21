@@ -13,6 +13,9 @@ export const dbTables = {
   organizationAuths: 'organization_auths',
   passwordResets: 'password_resets',
   userTokens: 'user_tokens',
+  deployCryptoPayments: 'deployment_crypto_payments',
+  deployCashPayments: 'deployment_cash_payments',
+  stripeCustomers: 'stripe_customers',
 };
 // Will make env variables later.
 export const ADMIN_ADDRESSES: string[] = (<string>process.env.ADMIN_ADDRESSES || '').split(','); // Fill up with permitted admin wallet addresses
@@ -56,3 +59,7 @@ export const sendgrid = {
   }
 };
 export const FRONTEND_URL = <string> process.env.FRONTEND_URL;
+
+export const stripeConfig = {
+  secretKey: <string> process.env.STRIPE_SECRET_KEY,
+};

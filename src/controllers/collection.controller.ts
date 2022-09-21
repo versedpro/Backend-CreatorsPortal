@@ -115,14 +115,14 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${errors.join(', ')}`);
     }
 
-    const collectionArr = await collectionService.addCollection({
+    const { collection, stripe_cards } = await collectionService.addCollection({
       creatorId: creatorId!,
       creatorType,
       data,
       files: req.files as UploadFilesData,
     });
 
-    if (collectionArr.length < 1) {
+    if (!collection) {
       return Response.failure(res, {
         message: 'An error occurred, Collection could not be created'
       });
@@ -130,7 +130,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     return Response.success(res, {
       message: 'Successful',
-      response: collectionArr[0],
+      response: { ...collection, payment_cards: stripe_cards },
     }, StatusCodes.OK);
   } catch (err: any) {
     await cleanupFiles(req);
@@ -192,7 +192,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
 
     const data = req.body as UpdateCollectionData;
 
-    const collectionArr = await collectionService.updateCollection({
+    const collection = await collectionService.updateCollection({
       creatorId: creatorId!,
       creatorType: CreatorType.ADMIN,
       collectionId,
@@ -200,7 +200,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
       files: req.files as UploadFilesData,
     });
 
-    if (collectionArr.length < 1) {
+    if (!collection) {
       return Response.failure(res, {
         message: 'An error occurred, Collection could not be updated'
       });
@@ -208,7 +208,7 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
 
     return Response.success(res, {
       message: 'Successful',
-      response: collectionArr[0],
+      response: collection,
     }, StatusCodes.OK);
   } catch (err: any) {
     await cleanupFiles(req);
