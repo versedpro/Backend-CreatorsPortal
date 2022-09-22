@@ -102,7 +102,7 @@ export const getCollectionExpValidator = () => {
       .bail(),
     query('status', 'valid status is required')
       .optional()
-      .isIn(['IN_PROGRESS', 'DEPLOYED'])
+      .isIn(['DRAFT', 'DEPLOYMENT_IN_PROGRESS', 'DEPLOYMENT_FAILED', 'DEPLOYED'])
       .bail(),
     query('oldest_date', 'Valid oldest_date is required')
       .optional()
