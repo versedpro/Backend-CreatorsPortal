@@ -200,6 +200,7 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
     }
     const collection_id = paymentIntent.metadata.collection_id;
     // const organization_id = paymentIntent.metadata.organization_id;
+    // TODO: save payment record in DB.
     switch (event.type) {
       case 'payment_intent.processing': {
         const collection = await KnexHelper.getNftCollectionByID(collection_id);
