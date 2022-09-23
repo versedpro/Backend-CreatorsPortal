@@ -9,6 +9,8 @@ tags:
   - name: onboarding
   - name: user
   - name: nft_collection
+security:
+  - ClientID: [ ]
 
 paths:
   /signup:
@@ -17,6 +19,14 @@ paths:
         - onboarding
       summary: Signup User
       operationId: signUpUser
+      description: |
+        Fields 'public_address' and 'signature' can be added when a user is trying to connect their wallet
+        during signup.
+        <br/>TO GET THE signature:
+        <br/>
+        Compose the string as follows: `Luna Creators Portal Signup: ${invite_code}`
+        <br/>
+        Then let the user sign this with their wallet.
       requestBody:
         content:
           application/json:
@@ -95,38 +105,41 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
-#  /connect-wallet:
-#    post:
-#      tags:
-#        - onboarding
-#      summary: Connect user wallet
-#      description: |
-#        1. Note that this endpoint is for users to connect their wallet after they have initially signed in with email and password so they they can login with their wallet later in the future.
-#        2. Compose the string as follows: `Luna Creators Portal Connect Wallet: ${user.nonce}`
-#        3. Let the user sign this with their wallet.
-#        4. Send public_address and signature in request
-#      requestBody:
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/AuthRequest'
-#      responses:
-#        '200':
-#          description: Ok
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/GenericResponse'
-#        '403':
-#          description: Forbidden
-#          content:
-#            application/json:
-#              schema:
-#                type: object
-#              example:
-#                error: true
-#                code: 403
-#                message: An admin public_address is required
+  /connect-wallet:
+    post:
+      tags:
+        - onboarding
+      summary: Connect user wallet
+      operationId: connectUserWallet
+      security:
+        - ApiKeyAuth: [ ]
+      description: |
+        1. Note that this endpoint is for users to connect their wallet after they have initially signed in with email and password so they they can login with their wallet later in the future.
+        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+        3. Let the user sign this with their wallet.
+        4. Send public_address and signature in request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpUserResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin public_address is required
 
   /me:
     get:
@@ -136,7 +149,6 @@ paths:
       operationId: GetUser
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       responses:
         '200':
           description: OK
@@ -191,7 +203,6 @@ paths:
       operationId: GetUserSigningInfo
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       responses:
         '200':
           description: OK
@@ -216,7 +227,6 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       operationId: createNftCollection
       summary: Create NFT collection for user
       description: |
@@ -302,7 +312,6 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       parameters:
         - name: name
           in: query
@@ -361,7 +370,6 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       operationId: updateCollectionInfo
       summary: Update a deployed collection info
       description: |
@@ -447,7 +455,6 @@ paths:
         - nft_collection
       security:
         - ApiKeyAuth: [ ]
-        - ClientID: [ ]
       operationId: getCollectionInfo
       summary: Get collection info
       responses:
@@ -468,6 +475,40 @@ paths:
                 code: 403
                 message: An user auth key is required
 
+  /wallet-auth:
+    post:
+      tags:
+        - auth
+      summary: Sign in user with crypto wallet
+      operationId: walletSignInUser
+      description: |
+        1. Get the user Nonce by making an API request to get the user.
+        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+        3. Let the user sign this with their wallet.
+        4. Send public_address and signature in request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpUserResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin public_address is required
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -477,7 +518,7 @@ components:
     ClientID:
       type: apiKey
       in: header
-      name: x-cient-id
+      name: x-client-id
       description: Unique identifier for each frontend browser/client
   responses:
     ErrorResponse401:
@@ -541,7 +582,10 @@ components:
           type: string
         invite_code:
           type: string
-          format: string
+        public_address:
+          type: string
+        signature:
+          type: string
 
     LoginUserRequest:
       type: object
@@ -883,6 +927,9 @@ components:
 
     AuthRequest:
       type: object
+      required:
+        - public_address
+        - signature
       properties:
         public_address:
           type: string

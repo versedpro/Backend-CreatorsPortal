@@ -4,6 +4,8 @@ export interface SignUpRequest {
   email: string;
   password: string;
   invite_code: string;
+  public_address?: string;
+  signature?: string;
   client_id: string;
 }
 
@@ -16,6 +18,7 @@ export interface LoginRequest {
 export interface GenTokenRequest {
   user_id: string;
   client_id: string;
+  public_address?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -55,4 +58,17 @@ export interface GetPasswordResetDbRequest {
   email: string;
   otp: string;
   expires_at: string;
+}
+
+export interface ConnectWalletRequest {
+  user_id: string;
+  client_id: string;
+  public_address: string;
+  signature: string;
+}
+
+export interface UserWalletAuthRequest {
+  client_id: string;
+  public_address: string;
+  signature: string;
 }

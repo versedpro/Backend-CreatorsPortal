@@ -5,27 +5,14 @@ import { StatusCodes } from 'http-status-codes';
 import { UploadFilesData } from '../interfaces/organization';
 import { IExpressRequest } from '../interfaces/i.express.request';
 import { GetUserRequest } from '../interfaces/user';
-//
-// export async function handleAddUser(req: Request, res: ExpressResponse): Promise<void> {
-//   try {
-//     const { public_address: publicAddress } = req.params;
-//     const user = await userService.addUser({ public_address: publicAddress.toLowerCase() });
-//
-//     return Response.success(res, {
-//       message: 'Successful',
-//       response: user,
-//     }, StatusCodes.OK);
-//   } catch (err: any) {
-//     return Response.handleError(res, err);
-//   }
-// }
 
 export async function handleGetUser(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
-    const { public_address, id } = req.params;
+    const { public_address } = req.params;
+    const id = req.userId;
     const query: GetUserRequest = {};
     if (public_address) {
-      query.public_address = public_address;
+      query.public_address = public_address.toLowerCase();
     }
     if (id) {
       query.id = id;

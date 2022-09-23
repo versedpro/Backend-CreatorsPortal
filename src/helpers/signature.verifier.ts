@@ -2,10 +2,10 @@ import * as sigUtil from '@metamask/eth-sig-util';
 
 import { Admin } from '../interfaces/admin';
 import { InvalidSignatureError } from '../interfaces';
-import { UserInfo } from '../interfaces/user';
+import { OrganizationInfo } from '../interfaces/organization';
 
 export interface SigVerificationBody {
-  user: Admin | UserInfo;
+  user: Admin | OrganizationInfo;
   signature: string;
   publicAddress: string;
 }

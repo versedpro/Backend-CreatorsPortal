@@ -5,20 +5,12 @@ import { StatusCodes } from 'http-status-codes';
 import { RoleType } from '../interfaces/jwt.config';
 import { InvalidSignatureError } from '../interfaces';
 
-export async function handleAuth(req: Request, res: ExpressResponse): Promise<void> {
+export async function handleAdminWalletAuth(req: Request, res: ExpressResponse): Promise<void> {
   try {
     const { public_address: publicAddress, signature } = req.body;
-    // const { user_type: userType } = req.params;
-    //
-    // if (userType !== 'admin') {
-    //   return Response.failure(res, {
-    //     message: 'No user wallet sign in for now',
-    //   }, StatusCodes.FORBIDDEN);
-    // }
     const response = await authService.generateAuthToken({
       publicAddress,
       signature,
-      // roleType: userType === 'admin' ? RoleType.ADMIN : RoleType.USER
       roleType: RoleType.ADMIN,
     });
 

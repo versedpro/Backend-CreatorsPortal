@@ -21,6 +21,14 @@ export const signUpUserValidator = () => {
     body('invite_code', 'Valid invite_code is required')
       .exists()
       .trim(),
+    body('signature', 'signature is required if public_address is sent')
+      .if(body('public_address').exists())
+      .exists()
+      .trim(),
+    body('public_address', 'public_address is required if signature is sent')
+      .if(body('signature').exists())
+      .exists()
+      .trim(),
   ]);
 };
 
@@ -61,6 +69,10 @@ export const resetPasswordValidator = () => {
       .trim()
       .isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })
       .bail(),
+    header('x-client-id', 'x-client-id is required')
+      .exists()
+      .isLength({ min: 25, max: 25 })
+      .bail(),
   ]);
 };
 
@@ -71,6 +83,10 @@ export const forgotPasswordValidator = () => {
       .trim()
       .isEmail()
       .toLowerCase()
+      .bail(),
+    header('x-client-id', 'x-client-id is required')
+      .exists()
+      .isLength({ min: 25, max: 25 })
       .bail(),
   ]);
 };
