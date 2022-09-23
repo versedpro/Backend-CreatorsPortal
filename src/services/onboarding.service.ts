@@ -1,11 +1,11 @@
 import bcrypt from 'bcrypt';
 import {
-  ChangePasswordRequest,
+  ChangePasswordRequest, ConnectWalletRequest,
   GenTokenRequest,
   LoginRequest,
   SignUpRequest,
   SignUpResponse,
-  UserAuth
+  UserAuth, UserWalletAuthRequest
 } from '../interfaces/onboarding';
 import { db as knex } from '../../data/db';
 import { dbTables, FRONTEND_URL, JWT_PUBLIC_KEY, sendgrid } from '../constants';
@@ -21,13 +21,19 @@ import { OrgInviteStatus } from '../interfaces/OrgInvite';
 import randomstring from 'randomstring';
 import { sendgridMail } from '../helpers/sendgrid.helper';
 import * as CacheHelper from '../helpers/cache.helper';
+import { SignatureVerifier } from '../helpers/signature.verifier';
+import * as sigUtil from '@metamask/eth-sig-util';
 
 const saltRounds = 10;
 
 async function generateAndSaveToken(req: GenTokenRequest): Promise<string> {
   // generate token; and save in DB.
   const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
-  const token = await jwtHelper.generateToken({ publicAddress: '', roleType: RoleType.USER, userId: req.user_id, });
+  const token = await jwtHelper.generateToken({
+    publicAddress: req.public_address,
+    roleType: RoleType.USER,
+    userId: req.user_id,
+  });
   // expires in 21 days
   const expiresAt = Date.now() + (USER_TOKEN_EXPIRY_IN_SECONDS * 1000);
   await knex(dbTables.userTokens).insert({
@@ -37,6 +43,29 @@ async function generateAndSaveToken(req: GenTokenRequest): Promise<string> {
     valid: true,
     expires_at: new Date(expiresAt),
   });
+  return token;
+}
+
+async function invalidateOldAndSaveNewToken(body: GenTokenRequest): Promise<string> {
+  const { user_id, client_id } = body;
+  // delete all previous tokens
+  const deletedTokens = await knex(dbTables.userTokens)
+    .where({
+      organization_id: user_id,
+      client_id: client_id,
+      valid: true,
+    })
+    .delete()
+    .returning(['token']);
+  Logger.Info('deletedTokens');
+  Logger.Info(deletedTokens);
+  // update token expiry in cache
+  for (const body of deletedTokens) {
+    await CacheHelper.del(`jwt_${body.token}`);
+  }
+
+  const token = await generateAndSaveToken(body);
+  await CacheHelper.set(`jwt_${token}`, true);
   return token;
 }
 
@@ -52,6 +81,19 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
   }
   if (invite.email.toLowerCase() !== email.toLowerCase()) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Email does not match invited email');
+  }
+  let { public_address } = request;
+  const { signature } = request;
+  if (public_address && signature) {
+    public_address = public_address.toLowerCase();
+    const address = sigUtil.recoverPersonalSignature({
+        data: `Luna Creators Portal Signup: ${invite_code}`,
+        signature,
+      }
+    );
+    if (address.toLowerCase() !== public_address.toLowerCase()) {
+      throw new CustomError(StatusCodes.BAD_REQUEST, 'Signature not valid');
+    }
   }
   // check if email exists in organization
   const existingOrgRes = await knex(dbTables.organizations)
@@ -78,6 +120,10 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
       type: 'BRAND',
       onboarding_type: OnboardingType.INVITED,
     };
+    if (public_address) {
+      // @ts-ignore
+      newOrganization.public_address = public_address;
+    }
     const { id: newOrgId } = await KnexHelper.insertOrganization(newOrganization);
     organization = await KnexHelper.getSingleOrganizationInfo({ id: newOrgId });
     if (!organization) {
@@ -96,7 +142,7 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
   await knex(dbTables.organizationAuths).insert(authToSave);
   Logger.Info('SIGN UP: Saved New Auth with Hashed Password');
 
-  const token = await generateAndSaveToken({ user_id: organization.id, client_id: request.client_id });
+  const token = await generateAndSaveToken({ user_id: organization.id, client_id: request.client_id, public_address });
   Logger.Info('SIGN UP: Generated and saved user token');
   // Expire invite
   await knex(dbTables.organizationInvites).where({ id: invite.id }).update({
@@ -132,22 +178,10 @@ export async function loginUser(request: LoginRequest): Promise<SignUpResponse> 
     Logger.Error(`LOGIN ERROR: Organization record not found for email: ${email}`);
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Invalid login');
   }
-  const existingValidTokenRes = await knex(dbTables.userTokens).select()
-    .where({
-      organization_id: user.id,
-      client_id: request.client_id,
-      valid: true,
-    })
-    .whereRaw('expires_at > now ()')
-    .limit(1);
-  if (existingValidTokenRes.length > 0) {
-    const existingId = existingValidTokenRes[0].id;
-    await knex(dbTables.userTokens)
-      .where({ id: existingId })
-      .delete();
-  }
-  const token = await generateAndSaveToken({ user_id: user.id, client_id: request.client_id });
-  await CacheHelper.set(`jwt_${token}`, true);
+  const token = await invalidateOldAndSaveNewToken({
+    user_id: user.id,
+    client_id: request.client_id,
+  });
   return {
     token,
     user,
@@ -248,4 +282,55 @@ export async function changePassword(request: ChangePasswordRequest): Promise<bo
   });
 
   return true;
+}
+
+export async function connectWallet(request: ConnectWalletRequest): Promise<SignUpResponse> {
+  Logger.Info(request);
+  const { user_id, signature } = request;
+  let { public_address } = request;
+  public_address = public_address.toLowerCase();
+  const user = await KnexHelper.getSingleOrganizationInfo({ id: user_id });
+  if (!user) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, '');
+  }
+  if (user.public_address) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'Wallet is already connected');
+  }
+  await SignatureVerifier.verifySignature({ publicAddress: public_address, signature, user });
+  await KnexHelper.updateOrganization(user_id, {
+    public_address,
+    nonce: Math.floor(Math.random() * 1000000),
+  });
+  const token = await invalidateOldAndSaveNewToken({
+    user_id: user.id,
+    client_id: request.client_id,
+    public_address,
+  });
+  return {
+    token,
+    user,
+  };
+}
+
+export async function signInWithWallet(request: UserWalletAuthRequest): Promise<SignUpResponse> {
+  const { signature } = request;
+  let { public_address } = request;
+  public_address = public_address.toLowerCase();
+  const user = await KnexHelper.getSingleOrganizationInfo({ public_address });
+  if (!user) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'User not found');
+  }
+  await SignatureVerifier.verifySignature({ publicAddress: public_address, signature, user });
+  await KnexHelper.updateOrganization(user.id, {
+    nonce: Math.floor(Math.random() * 1000000),
+  });
+  const token = await invalidateOldAndSaveNewToken({
+    user_id: user.id,
+    client_id: request.client_id,
+    public_address,
+  });
+  return {
+    token,
+    user,
+  };
 }

@@ -14,6 +14,7 @@ import {
   loginUserValidator, resetPasswordValidator,
   signUpUserValidator
 } from '../middlewares/onboarding.validator';
+import { userAuthValidator } from '../middlewares/auth.validator';
 
 const router = express.Router();
 const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
@@ -46,6 +47,19 @@ router.post(
   onboardingController.handleChangePassword
 );
 
+router.post(
+  '/connect-wallet',
+  jwtHelper.requirePermission(RoleType.USER),
+  userAuthValidator(),
+  onboardingController.handleConnectWallet
+);
+
+router.post(
+  '/wallet-auth',
+  userAuthValidator(),
+  onboardingController.handleWalletAuth
+);
+
 // Get user
 router.get(
   '/:public_address/signing-info',
@@ -54,14 +68,14 @@ router.get(
 
 // Get user
 router.get(
-  '/:id',
+  '/me',
   jwtHelper.requirePermission(RoleType.USER),
   controller.handleGetUser,
 );
 
 // Update image and username for user
 router.put(
-  '/:public_address',
+  '/me',
   jwtHelper.requirePermission(RoleType.USER),
   multerUpload.fields([
     { name: 'image', maxCount: 1 },

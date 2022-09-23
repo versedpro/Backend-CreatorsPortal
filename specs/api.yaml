@@ -1015,9 +1015,7 @@ components:
                 token:
                   type: string
                 user:
-                  oneOf:
-                    - $ref: '#/components/schemas/AdminData'
-                    - $ref: '#/components/schemas/UserData'
+                  $ref: '#/components/schemas/AdminData'
 
     OrganizationType:
       type: string

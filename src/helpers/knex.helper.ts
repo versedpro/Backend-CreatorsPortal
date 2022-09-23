@@ -153,6 +153,7 @@ export class KnexHelper {
       public_address: org.public_address,
       image: org.image,
       banner: org.banner,
+      nonce: org.nonce,
     };
 
     await knex(dbTables.organizations)

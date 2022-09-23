@@ -1,5 +1,5 @@
 import { Validator } from './validator';
-import { body } from 'express-validator';
+import { body, header } from 'express-validator';
 import { ADMIN_ADDRESSES } from '../constants';
 
 export const authValidator = () => {
@@ -16,6 +16,24 @@ export const authValidator = () => {
     body('signature', 'signature is required')
       .exists()
       .trim()
+      .bail(),
+  ]);
+};
+
+export const userAuthValidator = () => {
+  return Validator.validate([
+    body('public_address', 'public_address is required')
+      .exists()
+      .trim()
+      .toLowerCase()
+      .bail(),
+    body('signature', 'signature is required')
+      .exists()
+      .trim()
+      .bail(),
+    header('x-client-id', 'x-client-id is required')
+      .exists()
+      .isLength({ min: 25, max: 25 })
       .bail(),
   ]);
 };

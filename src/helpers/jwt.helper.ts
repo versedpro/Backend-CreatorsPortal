@@ -38,7 +38,6 @@ export class JwtHelper {
   }
 
   async generateToken(params: JwtData, expiryInSeconds = USER_TOKEN_EXPIRY_IN_SECONDS) {
-    const { publicAddress, roleType, userId } = params;
     const encryptionKey = Buffer.from(this.configOption.publicKey, 'base64').toString();
     const options: jwt.SignOptions = {};
     if (expiryInSeconds) {
@@ -46,7 +45,7 @@ export class JwtHelper {
     }
     try {
       return jwt.sign(
-        { publicAddress, roleType, userId },
+        params,
         encryptionKey, options
       );
     } catch (error) {

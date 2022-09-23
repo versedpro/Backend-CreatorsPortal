@@ -26,6 +26,7 @@ export interface UpdateOrganizationRequest {
   image?: string;
   banner?: string;
   onboarding_type?: OnboardingType;
+  nonce?: number;
 }
 
 export interface OrganizationInfo {
