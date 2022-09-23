@@ -101,8 +101,8 @@ paths:
 #        - onboarding
 #      summary: Connect user wallet
 #      description: |
-#        1. Get the user Nonce by making an API request to get the user.
-#        2. Compose the string as follows: `Luna Creators Portal Login: ${user.nonce}`
+#        1. Note that this endpoint is for users to connect their wallet after they have initially signed in with email and password so they they can login with their wallet later in the future.
+#        2. Compose the string as follows: `Luna Creators Portal Connect Wallet: ${user.nonce}`
 #        3. Let the user sign this with their wallet.
 #        4. Send public_address and signature in request
 #      requestBody:
