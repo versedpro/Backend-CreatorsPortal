@@ -62,6 +62,10 @@ export interface CollectionInfo {
   checkout_font_color?: string;
   terms_and_condition_enabled?: string;
   terms_and_condition_link?: string;
+  fees_estimate_crypto?: string;
+  fees_estimate_usd?: string;
+  payment_option?: PaymentOption;
+  payment_expires_at?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -80,7 +84,7 @@ export interface UploadImagesResult {
 }
 
 export enum NftCollectionStatus {
-  IN_PROGRESS = 'IN_PROGRESS',
+  // IN_PROGRESS = 'IN_PROGRESS',
   DEPLOYED = 'DEPLOYED',
   DRAFT = 'DRAFT',
   PROCESSING_PAYMENT = 'PROCESSING_PAYMENT',
@@ -200,7 +204,8 @@ export enum PaymentOption {
 
 export interface DbUpdateCollectionPayment {
   status?: string;
-  fees_estimate_crypto?: string;
-  fees_estimate_usd?: string;
+  fees_estimate_crypto?: string | null;
+  fees_estimate_usd?: string | null;
   payment_option?: PaymentOption;
+  payment_expires_at?: Date;
 }

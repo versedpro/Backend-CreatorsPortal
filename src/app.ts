@@ -19,7 +19,7 @@ const isProduction: boolean = process.env.NODE_ENV === 'production';
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(bodyParser.raw({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('port', process.env.PORT);

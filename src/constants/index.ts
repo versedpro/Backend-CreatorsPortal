@@ -62,4 +62,5 @@ export const FRONTEND_URL = <string> process.env.FRONTEND_URL;
 
 export const stripeConfig = {
   secretKey: <string> process.env.STRIPE_SECRET_KEY,
+  endpointSecret: <string> process.env.STRIPE_SIGNATURE,
 };

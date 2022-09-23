@@ -49,9 +49,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     data.understand_irreversible_action = JSON.parse(req.body.understand_irreversible_action || false);
     data.track_ip_addresses = JSON.parse(req.body.track_ip_addresses || false);
     data.create_contract = JSON.parse(req.body.create_contract || false);
-    Logger.Info('got here 1');
     data.payment_option = req.body.payment_option || PaymentOption.CRYPTO;
-    Logger.Info('got here 2');
     const {
       chain,
       name,
@@ -115,7 +113,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${errors.join(', ')}`);
     }
 
-    const { collection, stripe_cards } = await collectionService.addCollection({
+    const collection = await collectionService.addCollection({
       creatorId: creatorId!,
       creatorType,
       data,
@@ -130,7 +128,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
     return Response.success(res, {
       message: 'Successful',
-      response: { ...collection, payment_cards: stripe_cards },
+      response: collection,
     }, StatusCodes.OK);
   } catch (err: any) {
     await cleanupFiles(req);

@@ -8,6 +8,7 @@ import { multerUpload } from '../helpers/aws/image.uploader';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 import { updateUserValidator } from '../middlewares/user.validator';
 import collectionRoutes from './user.collection';
+import paymentRoutes from './payment';
 import {
   forgotPasswordValidator,
   loginUserValidator, resetPasswordValidator,
@@ -70,6 +71,7 @@ router.put(
   controller.handleUpdateUser);
 
 router.use('/me/collections', jwtHelper.requirePermission(RoleType.USER), collectionRoutes);
+router.use('/me/payments', jwtHelper.requirePermission(RoleType.USER), paymentRoutes);
 
 
 export default router;

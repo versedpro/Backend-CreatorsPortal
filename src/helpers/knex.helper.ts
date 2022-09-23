@@ -402,7 +402,6 @@ export class KnexHelper {
         organization_id: body.organizationId,
         customer_id: body.customerId,
       });
-
   }
 
   static async getStripeCustomerId(organizationId: string): Promise<string | undefined> {

@@ -9,6 +9,7 @@ tags:
   - name: onboarding
   - name: user
   - name: nft_collection
+  - name: credit_card
 
 paths:
   /signup:
@@ -281,6 +282,8 @@ paths:
                 create_contract:
                   type: string
                   default: true
+                payment_option:
+                  $ref: '#/components/schemas/PaymentOption'
                 first_party_data:
                   description: |
                     JSON stringified array of FirstPartyDatum object
@@ -294,7 +297,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateUserCollectionResponse'
+                $ref: '#/components/schemas/GetUserCollectionResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
     get:
@@ -468,7 +471,23 @@ paths:
                 code: 403
                 message: An user auth key is required
 
-  /payments/{collection_id}/stripe-client-secret:
+  /me/payments/cards:
+    get:
+      tags:
+        - credit_card
+      summary: Get cards that the user has saved to be charged
+      operationId: getUserSavedCards
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPaymentCardsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /me/payments/{collection_id}/stripe-client-secret:
     parameters:
       - name: collection_id
         in: path
@@ -484,7 +503,7 @@ paths:
         required: false
     get:
       tags:
-        - nft_collection
+        - credit_card
       summary: Get Stripe Client secret that is used for payment
       description: |
         Query param 'save_card' indicates if thge user wants to save the card for later.
@@ -499,7 +518,7 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
-  /payments/{collection_id}/charge-card:
+  /me/payments/{collection_id}/charge-card:
     parameters:
       - name: collection_id
         in: path
@@ -509,7 +528,7 @@ paths:
         required: true
     post:
       tags:
-        - nft_collection
+        - credit_card
       summary: If user selects an existing card, send the card id over
       operationId: chargeCard
       requestBody:
@@ -906,20 +925,18 @@ components:
             data:
               $ref: '#/components/schemas/UserNftCollectionInfo'
 
-    CreateUserCollectionResponse:
+    GetPaymentCardsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
         - type: object
           properties:
             data:
-              allOf:
-                - $ref: '#/components/schemas/UserNftCollectionInfo'
-                - type: object
-                  properties:
-                    payment_cards:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/PaymentCard'
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentCard'
 
     NftCollectionStatus:
       type: string
@@ -990,6 +1007,12 @@ components:
 
     PaymentCard:
       type: object
+      required:
+        - id
+        - brand
+        - exp_month
+        - exp_year
+        - last4
       properties:
         id:
           type: string
@@ -1010,10 +1033,10 @@ components:
             data:
               type: object
               required:
-                - organization_id
+                - user_id
                 - client_secret
               properties:
-                organization_id:
+                user_id:
                   type: string
                 client_secret:
                   type: string
@@ -1027,16 +1050,12 @@ components:
               type: object
               required:
                 - status
-                - organization_id
+                - user_id
                 - card_id
               properties:
-                status:
-                  type: string
-                  enum:
-                    - SUCCESSFUL
-                    - REQUIRES_AUTHENTICATION
-                    - FAILED
-                organization_id:
+                requires_auth:
+                  type: boolean
+                user_id:
                   type: string
                 client_secret:
                   type: string
