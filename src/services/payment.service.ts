@@ -3,7 +3,7 @@ import { Logger } from '../helpers/Logger';
 import { KnexHelper } from '../helpers/knex.helper';
 import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
-import { PreBillingResponse, StripeCard } from '../interfaces/stripe.card';
+import { PreBillingResponse, StripeCard, StripePaymentFor } from '../interfaces/stripe.card';
 import Stripe from 'stripe';
 import { stripeConfig } from '../constants';
 import { NftCollectionStatus } from '../interfaces/collection';
@@ -13,6 +13,8 @@ import { callContract } from './collection.service';
 const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2022-08-01',
 });
+
+const PRODUCT_ID = 'CREATORS_PORTAL';
 
 export async function getCustomerId(param: { userId: string, email?: string }): Promise<string> {
   const { userId, email } = param;
@@ -126,7 +128,8 @@ export async function getClientSecret(request: { userId: string, collectionId: s
     metadata: {
       collection_id: collection.id!,
       organization_id: collection.organization_id!,
-      product: 'creators_portal'
+      product: PRODUCT_ID,
+      payment_for: StripePaymentFor.CONTRACT_DEPLOYMENT
     }
   };
   if (saveCard) {
@@ -156,7 +159,8 @@ export async function chargeCard(request: { userId: string, collectionId: string
     metadata: {
       collection_id: collection.id!,
       organization_id: collection.organization_id!,
-      product: 'creators_portal'
+      product: PRODUCT_ID,
+      payment_for: StripePaymentFor.CONTRACT_DEPLOYMENT
     }
   };
   try {
@@ -192,8 +196,14 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
     Logger.Error('Stripe validation failed');
     throw new CustomError(StatusCodes.UNAUTHORIZED, '');
   }
+  const eventType = event.type;
+  // @ts-ignore
+  const product = event.data.object.metadata?.product;
+  // @ts-ignore
+  const payment_for = event.data.object.metadata?.payment_for;
+  // handle based on the above variables.
 
-  if (event.type.startsWith('payment_intent')) {
+  if (eventType.startsWith('payment_intent') || (product === PRODUCT_ID) || (payment_for === StripePaymentFor.CONTRACT_DEPLOYMENT)) {
     const paymentIntent: Stripe.PaymentIntent = event.data.object as unknown as Stripe.PaymentIntent;
     if (!(paymentIntent.metadata?.product === 'creators_portal')) {
       return;
@@ -232,5 +242,4 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
       }
     }
   }
-
 }

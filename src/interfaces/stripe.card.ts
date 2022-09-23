@@ -14,3 +14,8 @@ export interface PreBillingResponse {
   organization: OrganizationInfo,
   collection: CollectionInfo,
 }
+export enum StripePaymentFor {
+  CONTRACT_DEPLOYMENT = 'CONTRACT_DEPLOYMENT',
+  PAYOUT_ORG = 'PAYOUT_ORG',
+  ADD_CONTRACT_TOKENS = 'ADD_CONTRACT_TOKENS',
+}
