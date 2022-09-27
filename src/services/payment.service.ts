@@ -5,7 +5,7 @@ import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
 import { PaymentPurpose, PreBillingResponse, StripeCard } from '../interfaces/stripe.card';
 import Stripe from 'stripe';
-import { stripeConfig } from '../constants';
+import { nodeEnv, stripeConfig } from '../constants';
 import { NftCollectionStatus } from '../interfaces/collection';
 import { callContract } from './collection.service';
 import { PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
@@ -15,7 +15,7 @@ const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2022-08-01',
 });
 
-const PRODUCT_ID = 'CREATORS_PORTAL';
+const PRODUCT_ID = nodeEnv === 'production' ? 'CREATORS_PORTAL' : `CREATORS_PORTAL_${nodeEnv}`;
 
 export async function getCustomerId(param: { userId: string, email?: string }): Promise<string> {
   const { userId, email } = param;

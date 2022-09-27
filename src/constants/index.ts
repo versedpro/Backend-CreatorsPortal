@@ -63,3 +63,4 @@ export const stripeConfig = {
   secretKey: <string> process.env.STRIPE_SECRET_KEY,
   endpointSecret: <string> process.env.STRIPE_SIGNATURE,
 };
+export const nodeEnv = <string> process.env.NODE_ENV;
