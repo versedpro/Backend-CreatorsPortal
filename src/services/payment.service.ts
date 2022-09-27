@@ -3,11 +3,12 @@ import { Logger } from '../helpers/Logger';
 import { KnexHelper } from '../helpers/knex.helper';
 import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
-import { PreBillingResponse, StripeCard, StripePaymentFor } from '../interfaces/stripe.card';
+import { PaymentPurpose, PreBillingResponse, StripeCard } from '../interfaces/stripe.card';
 import Stripe from 'stripe';
 import { stripeConfig } from '../constants';
 import { NftCollectionStatus } from '../interfaces/collection';
 import { callContract } from './collection.service';
+import { PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
 
 // Create stripe payment client
 const stripe = new Stripe(stripeConfig.secretKey, {
@@ -80,19 +81,30 @@ export async function preBilling(request: { userId: string, collectionId: string
   const { userId, collectionId } = request;
   const organization = await getCreatorOrganization(userId);
   const collection = await KnexHelper.getNftCollectionByID(collectionId);
+  const feePayment = await KnexHelper.getSingleFeePayment({
+    collection_id: collectionId,
+    organization_id: userId,
+    active: PaymentActive.ACTIVE,
+    purpose: PaymentPurpose.CONTRACT_DEPLOYMENT,
+    status: PaymentStatus.PENDING,
+    method: PaymentMethod.FIAT,
+  });
+  // get active feesPayment as well
   if (!collection) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection not found');
   }
 
-  if (!collection.fees_estimate_usd) {
+  if (!feePayment) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Collection creation not initiated');
   }
 
-  if (!collection.payment_expires_at || (new Date(collection.payment_expires_at).getTime() < Date.now())) {
+  if (new Date(feePayment.expires_at).getTime() < Date.now()) {
     await KnexHelper.updateNftCollectionPayment(collectionId, {
       status: NftCollectionStatus.DRAFT,
-      fees_estimate_crypto: null,
-      fees_estimate_usd: null,
+    });
+    await KnexHelper.updateFeePayment(feePayment.id, {
+      status: PaymentStatus.EXPIRED,
+      active: null
     });
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Payment window expired');
   }
@@ -107,6 +119,7 @@ export async function preBilling(request: { userId: string, collectionId: string
     stripeCustomerId,
     organization,
     collection,
+    feePayment,
   };
 }
 
@@ -115,12 +128,13 @@ export async function getClientSecret(request: { userId: string, collectionId: s
     stripeCustomerId,
     organization,
     collection,
+    feePayment,
   } = await preBilling(request);
 
   const intentParams: Stripe.PaymentIntentCreateParams = {
     customer: stripeCustomerId,
-    amount: parseInt((parseFloat(collection.fees_estimate_usd!) * 100).toString()),
-    currency: 'usd',
+    amount: parseInt((parseFloat(feePayment.estimate_fiat!) * 100).toString()),
+    currency: feePayment.currency,
     payment_method_types: [
       'card',
     ],
@@ -129,7 +143,7 @@ export async function getClientSecret(request: { userId: string, collectionId: s
       collection_id: collection.id!,
       organization_id: collection.organization_id!,
       product: PRODUCT_ID,
-      payment_for: StripePaymentFor.CONTRACT_DEPLOYMENT
+      payment_for: PaymentPurpose.CONTRACT_DEPLOYMENT
     }
   };
   if (saveCard) {
@@ -147,12 +161,13 @@ export async function chargeCard(request: { userId: string, collectionId: string
   const {
     stripeCustomerId,
     collection,
+    feePayment,
   } = await preBilling(request);
 
   const intentParams: Stripe.PaymentIntentCreateParams = {
     customer: stripeCustomerId,
-    amount: parseInt((parseFloat(collection.fees_estimate_usd!) * 100).toString()),
-    currency: 'usd',
+    amount: parseInt((parseFloat(feePayment.estimate_fiat!) * 100).toString()),
+    currency: feePayment.currency,
     payment_method: cardId,
     off_session: true,
     confirm: true,
@@ -160,7 +175,7 @@ export async function chargeCard(request: { userId: string, collectionId: string
       collection_id: collection.id!,
       organization_id: collection.organization_id!,
       product: PRODUCT_ID,
-      payment_for: StripePaymentFor.CONTRACT_DEPLOYMENT
+      payment_for: PaymentPurpose.CONTRACT_DEPLOYMENT
     }
   };
   try {
@@ -196,6 +211,7 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
     Logger.Error('Stripe validation failed');
     throw new CustomError(StatusCodes.UNAUTHORIZED, '');
   }
+  console.log(event);
   const eventType = event.type;
   // @ts-ignore
   const product = event.data.object.metadata?.product;
@@ -203,14 +219,18 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
   const payment_for = event.data.object.metadata?.payment_for;
   // handle based on the above variables.
 
-  if (eventType.startsWith('payment_intent') || (product === PRODUCT_ID) || (payment_for === StripePaymentFor.CONTRACT_DEPLOYMENT)) {
+  if (eventType.startsWith('payment_intent') && (product === PRODUCT_ID) && (payment_for === PaymentPurpose.CONTRACT_DEPLOYMENT)) {
     const paymentIntent: Stripe.PaymentIntent = event.data.object as unknown as Stripe.PaymentIntent;
-    if (!(paymentIntent.metadata?.product === 'creators_portal')) {
-      return;
-    }
     const collection_id = paymentIntent.metadata.collection_id;
     // const organization_id = paymentIntent.metadata.organization_id;
     // TODO: save payment record in DB.
+    const feePayment = await KnexHelper.getSingleFeePayment({
+      collection_id,
+      active: PaymentActive.ACTIVE,
+      purpose: PaymentPurpose.CONTRACT_DEPLOYMENT,
+      status: PaymentStatus.PENDING,
+      method: PaymentMethod.FIAT,
+    });
     switch (event.type) {
       case 'payment_intent.processing': {
         const collection = await KnexHelper.getNftCollectionByID(collection_id);
@@ -224,6 +244,14 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
       case 'payment_intent.succeeded': {
         // Deploy collection
         const collection = await KnexHelper.getNftCollectionByID(collection_id);
+        if (feePayment) {
+          await KnexHelper.updateFeePayment(feePayment.id, {
+            amount_paid: (paymentIntent.amount_received / 100).toString(),
+            status: PaymentStatus.SUCCESSFUL,
+            provider_tx_id: paymentIntent.id,
+            active: null,
+          });
+        }
         if (collection) {
           await KnexHelper.updateNftCollectionPayment(collection_id, {
             status: NftCollectionStatus.DEPLOYMENT_IN_PROGRESS,
@@ -234,6 +262,14 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
       }
       case 'payment_intent.payment_failed':
       case 'payment_intent.canceled': {
+        if (feePayment) {
+          await KnexHelper.updateFeePayment(feePayment.id, {
+            amount_paid: (paymentIntent.amount_received / 100).toString(),
+            status: PaymentStatus.FAILED,
+            provider_tx_id: paymentIntent.id,
+            active: null,
+          });
+        }
         // Update status
         await KnexHelper.updateNftCollectionPayment(collection_id, {
           status: NftCollectionStatus.DEPLOYMENT_FAILED,

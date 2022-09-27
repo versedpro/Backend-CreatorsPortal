@@ -142,7 +142,6 @@ paths:
                 code: 403
                 message: An admin public_address is required
 
-
   /me:
     get:
       tags:
@@ -308,7 +307,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetUserCollectionResponse'
+                $ref: '#/components/schemas/CreateCollectionResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse401'
     get:
@@ -933,15 +932,6 @@ components:
           description: Link to T&C
           type: string
           format: uri
-        payment_option:
-          $ref: '#/components/schemas/PaymentOption'
-        fees_estimate_crypto:
-          type: string
-        fees_estimate_usd:
-          type: string
-        payment_client_id:
-          description: Stripe client secret
-          type: string
         created_at:
           type: string
           format: 'date-time'
@@ -971,6 +961,23 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/UserNftCollectionInfo'
+
+    CreateCollectionResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/UserNftCollectionInfo'
+                - type: object
+                  properties:
+                    payment_option:
+                      $ref: '#/components/schemas/PaymentOption'
+                    fees_estimate_crypto:
+                      type: string
+                    fees_estimate_fiat:
+                      type: string
 
     GetPaymentCardsResponse:
       allOf:

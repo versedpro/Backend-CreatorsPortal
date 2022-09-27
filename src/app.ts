@@ -14,6 +14,7 @@ import ApiRoutes from './routes';
 import { ApiValidator } from './middlewares/openapi.validator';
 import apiDocsRoutes from './routes/api.docs';
 import * as CronHelper from './helpers/cron.helper';
+import * as BlockchainListener from './services/blockchain.listener.service';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
 
@@ -89,5 +90,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 CronHelper.cronUpdateExpiredInvites();
 CronHelper.cronDeleteExpiredUserTokens();
-
+CronHelper.expireFeePayments();
+BlockchainListener.runListener();
 export default app;

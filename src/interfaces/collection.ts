@@ -62,10 +62,6 @@ export interface CollectionInfo {
   checkout_font_color?: string;
   terms_and_condition_enabled?: string;
   terms_and_condition_link?: string;
-  fees_estimate_crypto?: string;
-  fees_estimate_usd?: string;
-  payment_option?: PaymentOption;
-  payment_expires_at?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -204,8 +200,11 @@ export enum PaymentOption {
 
 export interface DbUpdateCollectionPayment {
   status?: string;
-  fees_estimate_crypto?: string | null;
-  fees_estimate_usd?: string | null;
-  payment_option?: PaymentOption;
-  payment_expires_at?: Date;
+}
+
+export interface CreateCollectionResponse extends CollectionInfo {
+  payment_option: PaymentOption;
+  fees_estimate_crypto: string;
+  fees_estimate_fiat?: string;
+  currency: string;
 }

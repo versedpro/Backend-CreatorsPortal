@@ -13,8 +13,7 @@ export const dbTables = {
   organizationAuths: 'organization_auths',
   passwordResets: 'password_resets',
   userTokens: 'user_tokens',
-  deployCryptoPayments: 'deployment_crypto_payments',
-  deployCashPayments: 'deployment_cash_payments',
+  feesPayments: 'fees_payments',
   stripeCustomers: 'stripe_customers',
 };
 // Will make env variables later.

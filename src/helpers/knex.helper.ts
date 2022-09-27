@@ -29,6 +29,13 @@ import { GetItemRequest } from '../interfaces/get.item.request';
 import { UpdateUserDbRequest } from '../interfaces/user';
 import { OrgInvite, OrgInviteStatus } from '../interfaces/OrgInvite';
 import { UserAuth } from '../interfaces/onboarding';
+import {
+  DbGetPaymentParam,
+  DbInsertPaymentRequest,
+  DbUpdatePaymentRequest,
+  FeePayment,
+  PaymentActive
+} from '../interfaces/PaymentRequest';
 
 export class KnexHelper {
   /*
@@ -412,5 +419,49 @@ export class KnexHelper {
       return undefined;
     }
     return res[0].customer_id;
+  }
+
+  static async insertFeePayment(body: DbInsertPaymentRequest): Promise<boolean> {
+    const { collection_id, purpose } = body;
+    await knex(dbTables.feesPayments)
+      .update({
+        active: null,
+      })
+      .where({
+        collection_id,
+        purpose,
+        active: PaymentActive.ACTIVE,
+      });
+    return knex(dbTables.feesPayments)
+      .insert(body);
+  }
+
+  static async updateFeePayment(id: string, body: DbUpdatePaymentRequest): Promise<number> {
+    return knex(dbTables.feesPayments)
+      .update(body)
+      .where({
+        id,
+      });
+  }
+
+  static async getSingleFeePayment(body: DbGetPaymentParam): Promise<FeePayment | undefined> {
+    const result = await knex(dbTables.feesPayments)
+      .select()
+      .where(body)
+      .orderBy('updated_at', 'desc')
+      .limit(1);
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+
+  // RUNS EVERY 5 MINUTES
+  static async expireFeePayment(): Promise<number> {
+    Logger.Info('Expiring Late Fee Payments');
+    const updated = await knex(dbTables.feesPayments)
+      .whereRaw('expires_at < now () AND status = ?', ['PENDING'])
+      .update({ status: 'EXPIRED' });
+    Logger.Info(`Expired ${updated} fee payments`);
+    return updated;
   }
 }

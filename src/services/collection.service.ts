@@ -3,6 +3,7 @@ import {
   AnswerRequest,
   CollectionInfo,
   CreateCollectionRequest,
+  CreateCollectionResponse,
   CreatorType,
   DbUpdateCollectionData,
   FirstPartyQuestionAnswer,
@@ -26,6 +27,8 @@ import { OrganizationInfo, UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
 import * as CacheHelper from '../helpers/cache.helper';
 import axios from 'axios';
+import { PaymentPurpose } from '../interfaces/stripe.card';
+import { DbInsertPaymentRequest, PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -71,7 +74,7 @@ export async function getCreatorId(id: string): Promise<string> {
   throw new CustomError(StatusCodes.NOT_FOUND, 'Creator not found');
 }
 
-export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo | undefined> {
+export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo | CreateCollectionResponse | undefined> {
   const { data, files } = request;
   const collectionId = data.collection_id || uuidv4();
 
@@ -160,14 +163,20 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   const collection = await KnexHelper.getNftCollectionByID(collectionId);
   if ((request.creatorType === CreatorType.ADMIN) && data.create_contract) {
     await callContract(collection!);
-    const newCollect = await KnexHelper.getNftCollectionByID(collectionId);
-    return newCollect;
+    return await KnexHelper.getNftCollectionByID(collectionId);
   } else if ((request.creatorType === CreatorType.USER) && data.create_contract) {
     // Estimate gas
-    await getGasPrice(collection!, request.data.payment_option);
+    const gasResp = await getGasPrice(collection!, request.data.payment_option);
     // if payment method is credit_card: convert Estimate to USD
     // return estimate with response.
-    return await KnexHelper.getNftCollectionByID(collectionId);
+    const updatedCollection = await KnexHelper.getNftCollectionByID(collectionId);
+    return {
+      ...updatedCollection,
+      payment_option: request.data.payment_option || PaymentOption.CRYPTO,
+      fees_estimate_crypto: gasResp.estimate_crypto,
+      fees_estimate_fiat: gasResp.estimate_fiat,
+      currency: gasResp.currency,
+    } as CreateCollectionResponse;
 
   }
   return collection;
@@ -206,38 +215,64 @@ async function getDeployRequestBody(collection: CollectionInfo): Promise<any> {
   }
 }
 
-async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOption): Promise<void> {
+async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOption): Promise<{ currency: string, estimate_crypto: string, estimate_fiat?: string }> {
   const contractService = ContractServiceRegistry.getService(collection.chain);
   const requestBody = await getDeployRequestBody(collection);
   if (requestBody && collection.id) {
     try {
-      let gasEstimateUSD;
+      let gasEstimateUSD: string | undefined;
       const gasPrice = await contractService.estimateDeploymentGas(requestBody);
       Logger.Info(`Gas Price to pay is ${gasPrice}`);
+      const paymentData: DbInsertPaymentRequest = {
+        organization_id: collection.organization_id!,
+        collection_id: collection.id,
+        estimate_crypto: gasPrice!.toString(),
+        // amount_paid?: string;
+        amount_expected: gasPrice!.toString(),
+        currency: collection.chain === 'ethereum' ? 'ETH' : 'MATIC',
+        network: collection.chain,
+        method: PaymentMethod.CRYPTO,
+        purpose: PaymentPurpose.CONTRACT_DEPLOYMENT,
+        expires_at: new Date(Date.now() + 600000),
+        active: PaymentActive.ACTIVE,
+        status: PaymentStatus.PENDING,
+      };
+
       if (paymentOption === PaymentOption.CREDIT_CARD) {
         Logger.Info('Paying with credit card');
         // Get estimate in USD.
         const ethToUSD: number = (await axios.get('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD')).data.USD;
-        gasEstimateUSD = (parseFloat(gasPrice!) * ethToUSD).toFixed(2);
+        let gasEstimateUSDFloat = (parseFloat(gasPrice!) * ethToUSD);
+        if (gasEstimateUSDFloat < 0.50) {
+          gasEstimateUSDFloat = 0.50;
+        }
+        gasEstimateUSD = gasEstimateUSDFloat.toFixed(2);
+        paymentData.amount_expected = gasEstimateUSD;
+        paymentData.estimate_fiat = gasEstimateUSD;
+        paymentData.currency = 'USD';
+        paymentData.method = PaymentMethod.FIAT;
+        paymentData.provider = 'stripe';
       }
-      const paymentUpdate = {
-        fees_estimate_crypto: gasPrice!.toString(),
-        fees_estimate_usd: gasEstimateUSD,
-        payment_option: paymentOption,
-        // Payment should be made within 10 minutes
+      // find and update collection_id, purpose and (status = PENDING), active = ACTIVE:
+      await KnexHelper.insertFeePayment(paymentData);
+      // set active to null.
+      // if (paymentOption === PaymentOption.CRYPTO) {
+      //   // @ts-ignore
+      //   paymentUpdate.status = NftCollectionStatus.PAYMENT_PENDING;
+      // }
+      await KnexHelper.updateNftCollectionPayment(collection.id, {
         status: NftCollectionStatus.DRAFT,
-        payment_expires_at: new Date(Date.now() + 600000),
+      });
+      return {
+        currency: paymentData.currency,
+        estimate_crypto: gasPrice!.toString(),
+        estimate_fiat: gasEstimateUSD,
       };
-      if (paymentOption === PaymentOption.CRYPTO) {
-        // @ts-ignore
-        paymentUpdate.status = NftCollectionStatus.PAYMENT_PENDING;
-      }
-      await KnexHelper.updateNftCollectionPayment(collection.id, paymentUpdate);
     } catch (err: any) {
       Logger.Error(err);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Could not estimate gas fees');
     }
   }
+  throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Could not estimate gas fees');
 }
 
 export async function callContract(collection: CollectionInfo) {
