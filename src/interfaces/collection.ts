@@ -31,6 +31,7 @@ export interface CreateCollectionData {
   track_ip_addresses?: boolean;
   first_party_data?: string;
   create_contract: boolean;
+  payment_option: PaymentOption;
 }
 
 export interface CollectionInfo {
@@ -79,8 +80,13 @@ export interface UploadImagesResult {
 }
 
 export enum NftCollectionStatus {
-  IN_PROGRESS = 'IN_PROGRESS',
+  // IN_PROGRESS = 'IN_PROGRESS',
   DEPLOYED = 'DEPLOYED',
+  DRAFT = 'DRAFT',
+  PROCESSING_PAYMENT = 'PROCESSING_PAYMENT',
+  DEPLOYMENT_IN_PROGRESS = 'DEPLOYMENT_IN_PROGRESS',
+  DEPLOYMENT_FAILED = 'DEPLOYMENT_FAILED',
+  PAYMENT_PENDING = 'PAYMENT_PENDING',
 }
 
 export interface GetCollectionRequest {
@@ -183,6 +189,22 @@ export interface AnswerRequest {
 }
 
 export enum CreatorType {
-  ORGANIZATION = 'ORGANIZATION',
+  ADMIN = 'ADMIN',
   USER = 'USER',
+}
+
+export enum PaymentOption {
+  CRYPTO = 'CRYPTO',
+  CREDIT_CARD = 'CREDIT_CARD',
+}
+
+export interface DbUpdateCollectionPayment {
+  status?: string;
+}
+
+export interface CreateCollectionResponse extends CollectionInfo {
+  payment_option: PaymentOption;
+  fees_estimate_crypto: string;
+  fees_estimate_fiat?: string;
+  currency: string;
 }

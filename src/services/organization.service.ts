@@ -129,8 +129,13 @@ export async function updateOrganization(organization_id: string, request: Updat
 
 export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite> {
   request.name = request.name.trim();
-  request.email = request.email.trim();
+  request.email = request.email.trim().toLowerCase();
   request.contact_name = request.contact_name.trim();
+
+  const existingOrg = await KnexHelper.getSingleOrganizationInfo({ email: request.email });
+  if (existingOrg) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'Organization with email already exists');
+  }
   // expires in 30 days
   const existingRes = await KnexHelper.getOrganizationInvite({ email: request.email });
   if (existingRes.length > 0) {

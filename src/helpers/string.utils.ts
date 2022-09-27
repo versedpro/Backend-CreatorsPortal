@@ -7,7 +7,7 @@ const Cryptr = require('cryptr');
 
 const cryptr = new Cryptr(JWT_PUBLIC_KEY || 'testing');
 
-export function toNumber(value: string | number, radix?: number): number {
+export function toIntNumber(value: string | number, radix?: number): number {
   if (typeof value === 'number') {
     return value;
   }

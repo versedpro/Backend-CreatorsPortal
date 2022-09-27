@@ -19,7 +19,7 @@ import { Pagination } from '../interfaces/pagination';
 import {
   CollectionInfo,
   DbGetOrganizationCollectionsRequest,
-  DbUpdateCollectionData,
+  DbUpdateCollectionData, DbUpdateCollectionPayment,
   FirstPartyQuestionAnswerInsertData,
   GetCollectionsResponse
 } from '../interfaces/collection';
@@ -29,6 +29,13 @@ import { GetItemRequest } from '../interfaces/get.item.request';
 import { UpdateUserDbRequest } from '../interfaces/user';
 import { OrgInvite, OrgInviteStatus } from '../interfaces/OrgInvite';
 import { UserAuth } from '../interfaces/onboarding';
+import {
+  DbGetPaymentParam,
+  DbInsertPaymentRequest,
+  DbUpdatePaymentRequest,
+  FeePayment,
+  PaymentActive
+} from '../interfaces/PaymentRequest';
 
 export class KnexHelper {
   /*
@@ -181,16 +188,25 @@ export class KnexHelper {
       .update({ status: 'DEPLOYED', contract_address: contractAddress });
   }
 
+  static async updateNftCollectionPayment(collectionId: string, body: DbUpdateCollectionPayment): Promise<any> {
+    return knex(dbTables.nftCollections)
+      .where({ id: collectionId })
+      .update(body);
+  }
+
   static async getAllNftCollections(): Promise<CollectionInfo[]> {
     const result = await knex(dbTables.nftCollections).select();
     return result as CollectionInfo[];
   }
 
-  static async getNftCollection(id: string): Promise<CollectionInfo[]> {
+  static async getNftCollectionByID(id: string): Promise<CollectionInfo | undefined> {
     const result = await knex(dbTables.nftCollections).select().where({
       id,
     }).limit(1);
-    return result as CollectionInfo[];
+    if (result.length === 0) {
+      return;
+    }
+    return result[0];
   }
 
   static async getNftCollectionByParams(params: any): Promise<CollectionInfo[]> {
@@ -386,5 +402,66 @@ export class KnexHelper {
       return undefined;
     }
     return res[0] as unknown as UserAuth;
+  }
+
+  static async saveStripeCustomerId(body: { organizationId: string, customerId: string }): Promise<boolean> {
+    return knex(dbTables.stripeCustomers)
+      .insert({
+        organization_id: body.organizationId,
+        customer_id: body.customerId,
+      });
+  }
+
+  static async getStripeCustomerId(organizationId: string): Promise<string | undefined> {
+    const res = await knex(dbTables.stripeCustomers).select()
+      .where({ organization_id: organizationId }).limit(1);
+    if (res.length === 0) {
+      return undefined;
+    }
+    return res[0].customer_id;
+  }
+
+  static async insertFeePayment(body: DbInsertPaymentRequest): Promise<boolean> {
+    const { collection_id, purpose } = body;
+    await knex(dbTables.feesPayments)
+      .update({
+        active: null,
+      })
+      .where({
+        collection_id,
+        purpose,
+        active: PaymentActive.ACTIVE,
+      });
+    return knex(dbTables.feesPayments)
+      .insert(body);
+  }
+
+  static async updateFeePayment(id: string, body: DbUpdatePaymentRequest): Promise<number> {
+    return knex(dbTables.feesPayments)
+      .update(body)
+      .where({
+        id,
+      });
+  }
+
+  static async getSingleFeePayment(body: DbGetPaymentParam): Promise<FeePayment | undefined> {
+    const result = await knex(dbTables.feesPayments)
+      .select()
+      .where(body)
+      .orderBy('updated_at', 'desc')
+      .limit(1);
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+
+  // RUNS EVERY 5 MINUTES
+  static async expireFeePayment(): Promise<number> {
+    Logger.Info('Expiring Late Fee Payments');
+    const updated = await knex(dbTables.feesPayments)
+      .whereRaw('expires_at < now () AND status = ?', ['PENDING'])
+      .update({ status: 'EXPIRED' });
+    Logger.Info(`Expired ${updated} fee payments`);
+    return updated;
   }
 }

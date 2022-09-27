@@ -10,4 +10,11 @@ export const dbTables = {
     organizationAuths: 'organization_auths',
     passwordResets: 'password_resets',
     userTokens: 'user_tokens',
+    feesPayments: 'fees_payments',
+    stripeCustomers: 'stripe_customers',
 };
+
+export const stagingCollectionToKeep = [
+  '0f9c6b5a-e1a4-4c09-87d5-82e4b1452668',
+  '04f34965-7ad1-4d1f-82f8-d17e0196afc7'
+];

@@ -3,6 +3,7 @@ import {
   AnswerRequest,
   CollectionInfo,
   CreateCollectionRequest,
+  CreateCollectionResponse,
   CreatorType,
   DbUpdateCollectionData,
   FirstPartyQuestionAnswer,
@@ -11,6 +12,7 @@ import {
   GetCollectionsResponse,
   GetOrganizationCollectionsRequest,
   NftCollectionStatus,
+  PaymentOption,
   UpdateCollectionRequest,
   UploadImagesResult
 } from '../interfaces/collection';
@@ -24,6 +26,9 @@ import { LogEvent } from '../interfaces/contract';
 import { OrganizationInfo, UploadFilesData } from '../interfaces/organization';
 import { ContractServiceRegistry } from '../helpers/contract.service.registry';
 import * as CacheHelper from '../helpers/cache.helper';
+import axios from 'axios';
+import { PaymentPurpose } from '../interfaces/stripe.card';
+import { DbInsertPaymentRequest, PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -66,35 +71,21 @@ export async function getCreatorId(id: string): Promise<string> {
   if (result.length > 0) {
     return (result[0] as OrganizationInfo).id;
   }
-  // const user = await KnexHelper.getUserById(id);
-  // if (user) {
-  //   return user.id;
-  // }
   throw new CustomError(StatusCodes.NOT_FOUND, 'Creator not found');
 }
 
-function composeIdParam(creatorId: string, creatorType: CreatorType) {
-  if (creatorType === CreatorType.ORGANIZATION) {
-    return { organization_id: creatorId };
-  } else {
-    return { user_id: creatorId };
-
-  }
-}
-
-export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo[]> {
+export async function addCollection(request: CreateCollectionRequest): Promise<CollectionInfo | CreateCollectionResponse | undefined> {
   const { data, files } = request;
   const collectionId = data.collection_id || uuidv4();
 
   // Do some collection validation
   if (data.collection_id) {
-    const collections = await KnexHelper.getNftCollection(collectionId);
-    if (collections.length > 0) {
-      const collection = collections[0];
+    const collection = await KnexHelper.getNftCollectionByID(collectionId);
+    if (collection) {
       if (collection.status === NftCollectionStatus.DEPLOYED) {
         throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: Collection already deployed');
       }
-      if ((collection.organization_id || collection.user_id)!.toLowerCase() !== request.creatorId.toLowerCase()) {
+      if (collection.organization_id!.toLowerCase() !== request.creatorId.toLowerCase()) {
         throw new CustomError(StatusCodes.BAD_REQUEST, 'Validation errors: creator mismatch');
       }
     }
@@ -117,7 +108,7 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   const collectionInfo = {
     id: collectionId,
     chain: data.chain,
-    ...composeIdParam(creatorId, request.creatorType),
+    organization_id: creatorId,
     name: data.collection_name,
     description: data.collection_description,
     about: data.collection_about,
@@ -169,18 +160,31 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
 
   await KnexHelper.upsertMetadata(nftMetadata);
 
-  const collections = await KnexHelper.getNftCollection(collectionId);
-  if ((request.creatorType === CreatorType.ORGANIZATION) && data.create_contract) {
-    await callContract(collections[0]);
-    return await KnexHelper.getNftCollection(collectionId);
+  const collection = await KnexHelper.getNftCollectionByID(collectionId);
+  if ((request.creatorType === CreatorType.ADMIN) && data.create_contract) {
+    await callContract(collection!);
+    return await KnexHelper.getNftCollectionByID(collectionId);
+  } else if ((request.creatorType === CreatorType.USER) && data.create_contract) {
+    // Estimate gas
+    const gasResp = await getGasPrice(collection!, request.data.payment_option);
+    // if payment method is credit_card: convert Estimate to USD
+    // return estimate with response.
+    const updatedCollection = await KnexHelper.getNftCollectionByID(collectionId);
+    return {
+      ...updatedCollection,
+      payment_option: request.data.payment_option || PaymentOption.CRYPTO,
+      fees_estimate_crypto: gasResp.estimate_crypto,
+      fees_estimate_fiat: gasResp.estimate_fiat,
+      currency: gasResp.currency,
+    } as CreateCollectionResponse;
+
   }
-  return collections;
+  return collection;
 }
 
-async function callContract(collection: CollectionInfo) {
+async function getDeployRequestBody(collection: CollectionInfo): Promise<any> {
   // 1. Get Collection and NFT info
   // 2. verify all data is present
-  // 3. Call NFT Contract
   if (!collection.id) {
     return;
   }
@@ -196,9 +200,8 @@ async function callContract(collection: CollectionInfo) {
   if ((collectionErrors !== '') || (itemErrors !== '')) {
     throw new CustomError(StatusCodes.BAD_REQUEST, `Validation errors: ${collectionErrors},${itemErrors}`);
   }
-  const contractService = ContractServiceRegistry.getService(collection.chain);
   if (!collection.contract_address) {
-    const txReceipt = await contractService.deployNftCollection({
+    return {
       collectionName: collection.name,
       collectionSymbol: collection.name.substring(0, 3).toUpperCase(),
       metadataUriPrefix: `${process.env.API_BASE_URL}/nft/${collection.id}/metadata/`,
@@ -208,7 +211,70 @@ async function callContract(collection: CollectionInfo) {
       quantity: nftItem.max_supply,
       price: nftItem!.price!.toString(),
       royalty: parseInt(nftItem.royalties || '0'),
-    });
+    };
+  }
+}
+
+async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOption): Promise<{ currency: string, estimate_crypto: string, estimate_fiat?: string }> {
+  const contractService = ContractServiceRegistry.getService(collection.chain);
+  const requestBody = await getDeployRequestBody(collection);
+  if (requestBody && collection.id) {
+    try {
+      let gasEstimateUSD: string | undefined;
+      const gasPrice = await contractService.estimateDeploymentGas(requestBody);
+      Logger.Info(`Gas Price to pay is ${gasPrice}`);
+      const paymentData: DbInsertPaymentRequest = {
+        organization_id: collection.organization_id!,
+        collection_id: collection.id,
+        estimate_crypto: gasPrice!.toString(),
+        amount_expected: gasPrice!.toString(),
+        currency: collection.chain === 'ethereum' ? 'ETH' : 'MATIC',
+        network: collection.chain,
+        method: PaymentMethod.CRYPTO,
+        purpose: PaymentPurpose.CONTRACT_DEPLOYMENT,
+        expires_at: new Date(Date.now() + 600000),
+        active: PaymentActive.ACTIVE,
+        status: PaymentStatus.PENDING,
+      };
+
+      if (paymentOption === PaymentOption.CREDIT_CARD) {
+        Logger.Info('Paying with credit card');
+        // Get estimate in USD.
+        const ethToUSD: number = (await axios.get('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD')).data.USD;
+        let gasEstimateUSDFloat = (parseFloat(gasPrice!) * ethToUSD);
+        if (gasEstimateUSDFloat < 0.50) {
+          gasEstimateUSDFloat = 0.50;
+        }
+        gasEstimateUSD = gasEstimateUSDFloat.toFixed(2);
+        paymentData.amount_expected = gasEstimateUSD;
+        paymentData.estimate_fiat = gasEstimateUSD;
+        paymentData.currency = 'USD';
+        paymentData.method = PaymentMethod.FIAT;
+        paymentData.provider = 'stripe';
+      }
+      // find and update collection_id, purpose and (status = PENDING), active = ACTIVE:
+      await KnexHelper.insertFeePayment(paymentData);
+      await KnexHelper.updateNftCollectionPayment(collection.id, {
+        status: NftCollectionStatus.DRAFT,
+      });
+      return {
+        currency: paymentData.currency,
+        estimate_crypto: gasPrice!.toString(),
+        estimate_fiat: gasEstimateUSD,
+      };
+    } catch (err: any) {
+      Logger.Error(err);
+    }
+  }
+  throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Could not estimate gas fees');
+}
+
+export async function callContract(collection: CollectionInfo) {
+  // 3. Call NFT Contract
+  const contractService = ContractServiceRegistry.getService(collection.chain);
+  const requestBody = await getDeployRequestBody(collection);
+  if (requestBody) {
+    const txReceipt = await contractService.deployNftCollection(requestBody);
 
     if (txReceipt && txReceipt.transactionHash) {
       const createdLog = (txReceipt.logs as LogEvent[]).find(x => x.data?.name === 'ERC1155Created');
@@ -216,10 +282,7 @@ async function callContract(collection: CollectionInfo) {
         const contractParam = createdLog.data?.params?.find(x => x.name === 'tokenContract');
         if (contractParam && contractParam.value) {
           const contractAddress = JSON.parse(contractParam.value);
-          await KnexHelper.updateNftCollectionAddress(collection.id, contractAddress);
-          // await KnexHelper.updateNftCollectionToDeployed(collection.id);
-          // No need to await these calls, causing response to be slow
-          // updateCollectionContract(contractAddress, collection, nftItem);
+          await KnexHelper.updateNftCollectionAddress(collection.id!, contractAddress);
         }
       }
     }
@@ -294,7 +357,7 @@ function verifyNftReady(item: NftItem): string {
 export async function getCollectionByIdAndCreator(body: GetCollectionRequest): Promise<CollectionInfo> {
   const results = await KnexHelper.getNftCollectionByParams({
     id: body.collectionId,
-    ...composeIdParam(body.creatorId, body.creatorType),
+    organization_id: body.creatorId,
   });
   if (results.length === 0) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
@@ -325,7 +388,7 @@ export function generateCollectionWhereClause(request: GetOrganizationCollection
   const clauses: string[] = [];
   const values: any[] = [];
   // Search params
-  clauses.push(request.creatorType === CreatorType.ORGANIZATION ? 'organization_id = ?' : 'user_id = ?');
+  clauses.push('organization_id = ?');
   values.push(creatorId);
 
   if (name) {
@@ -357,7 +420,7 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
   });
 }
 
-export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo[]> {
+export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo | undefined> {
   const { creatorId, collectionId, data, files } = request;
 
   Logger.Info('files', files);
@@ -404,7 +467,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
   const cacheKey = `mint_info_${collectionId}`;
   await CacheHelper.del(cacheKey);
   await CacheHelper.del(`Collection_Data_${collectionId}`);
-  return await KnexHelper.getNftCollection(collectionId);
+  return await KnexHelper.getNftCollectionByID(collectionId);
 }
 
 export async function saveAnsweredQuestions(body: AnswerRequest): Promise<FirstPartyQuestionAnswer[]> {

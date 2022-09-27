@@ -12,3 +12,9 @@ export function cronDeleteExpiredUserTokens() {
     await KnexHelper.deleteExpiredTokens();
   });
 }
+
+export function expireFeePayments() {
+  cron.schedule('*/2 * * * *', async () => {
+    await KnexHelper.expireFeePayment();
+  });
+}

@@ -20,7 +20,9 @@ router.post('/',
   ),
   cleanUpMulterFiles,
   createCollectionExpValidator(),
-  createCollectionValidator, controller.handleAddCollection);
+  createCollectionValidator,
+  controller.handleAddUserCollection
+);
 
 router.get('/', getCollectionExpValidator(), controller.handleGetCollections);
 
