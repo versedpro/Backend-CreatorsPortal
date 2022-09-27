@@ -8,7 +8,7 @@ import { NftCollectionStatus } from '../interfaces/collection';
 import { callContract } from './collection.service';
 import { PaymentPurpose } from '../interfaces/stripe.card';
 import { Logger } from '../helpers/Logger';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 const FACTORY_ABI = require('../abis/LunaFactory.json');
 
