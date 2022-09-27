@@ -15,12 +15,12 @@ import { ApiValidator } from './middlewares/openapi.validator';
 import apiDocsRoutes from './routes/api.docs';
 import * as CronHelper from './helpers/cron.helper';
 import * as BlockchainListener from './services/blockchain.listener.service';
+import webhookRoutes from './routes/webhook';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
 
 const app = express();
 
-app.use(bodyParser.raw({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('port', process.env.PORT);
@@ -55,6 +55,8 @@ app.disable('x-powered-by');
 
 app.use(methodOverride());
 app.use('/specs', express.static('specs'));
+
+app.use('/api/payments/webhook', webhookRoutes);
 
 app.use('/api', ApiValidator);
 

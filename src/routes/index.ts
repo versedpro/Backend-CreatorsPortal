@@ -9,15 +9,17 @@ import collectionRoutes from './collection';
 import nftRoutes from './nft';
 import mintRoutes from './mint';
 import userRoutes from './user';
-import webhookRoutes from './webhook';
 import * as controller from '../controllers/organization.controller';
 
 import { JwtHelper } from '../helpers/jwt.helper';
 import { JWT_PUBLIC_KEY } from '../constants';
 import { RoleType } from '../interfaces/jwt.config';
 import morgan from 'morgan';
+import bodyParser from 'body-parser';
 
 const router: express.Router = express.Router();
+router.use(bodyParser.json());
+
 const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
 router.use(morgan('combined'));
 
@@ -30,8 +32,6 @@ router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organi
 router.use('/nft', nftRoutes);
 router.use('/mint', mintRoutes);
 router.use('/users', userRoutes);
-router.use('/payments/webhook', webhookRoutes);
-
 
 router.use(routeError);
 
