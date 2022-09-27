@@ -150,9 +150,6 @@ export async function getClientSecret(request: { userId: string, collectionId: s
     intentParams.setup_future_usage = 'off_session';
   }
   const paymentIntent = await stripe.paymentIntents.create(intentParams);
-  // await KnexHelper.updateNftCollectionPayment(collection.id!, {
-  //   status: NftCollectionStatus.PAYMENT_PENDING,
-  // });
   return paymentIntent.client_secret!;
 }
 
@@ -222,8 +219,6 @@ export async function processStripeWebhookEvent(req: any): Promise<void> {
   if (eventType.startsWith('payment_intent') && (product === PRODUCT_ID) && (payment_for === PaymentPurpose.CONTRACT_DEPLOYMENT)) {
     const paymentIntent: Stripe.PaymentIntent = event.data.object as unknown as Stripe.PaymentIntent;
     const collection_id = paymentIntent.metadata.collection_id;
-    // const organization_id = paymentIntent.metadata.organization_id;
-    // TODO: save payment record in DB.
     const feePayment = await KnexHelper.getSingleFeePayment({
       collection_id,
       active: PaymentActive.ACTIVE,

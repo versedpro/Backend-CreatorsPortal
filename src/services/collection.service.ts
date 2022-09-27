@@ -227,7 +227,6 @@ async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOpt
         organization_id: collection.organization_id!,
         collection_id: collection.id,
         estimate_crypto: gasPrice!.toString(),
-        // amount_paid?: string;
         amount_expected: gasPrice!.toString(),
         currency: collection.chain === 'ethereum' ? 'ETH' : 'MATIC',
         network: collection.chain,
@@ -255,11 +254,6 @@ async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOpt
       }
       // find and update collection_id, purpose and (status = PENDING), active = ACTIVE:
       await KnexHelper.insertFeePayment(paymentData);
-      // set active to null.
-      // if (paymentOption === PaymentOption.CRYPTO) {
-      //   // @ts-ignore
-      //   paymentUpdate.status = NftCollectionStatus.PAYMENT_PENDING;
-      // }
       await KnexHelper.updateNftCollectionPayment(collection.id, {
         status: NftCollectionStatus.DRAFT,
       });
