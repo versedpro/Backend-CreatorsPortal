@@ -11,7 +11,6 @@ import methodOverride from 'method-override';
 import cors from 'cors';
 
 import ApiRoutes from './routes';
-import { ApiValidator } from './middlewares/openapi.validator';
 import apiDocsRoutes from './routes/api.docs';
 import * as CronHelper from './helpers/cron.helper';
 import * as BlockchainListener from './services/blockchain.listener.service';
@@ -57,8 +56,6 @@ app.use(methodOverride());
 app.use('/specs', express.static('specs'));
 
 app.use('/api/payments/webhook', webhookRoutes);
-
-app.use('/api', ApiValidator);
 
 const router = express.Router();
 

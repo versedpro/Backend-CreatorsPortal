@@ -16,9 +16,11 @@ import { JWT_PUBLIC_KEY } from '../constants';
 import { RoleType } from '../interfaces/jwt.config';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
+import { ApiValidator } from '../middlewares/openapi.validator';
 
 const router: express.Router = express.Router();
 router.use(bodyParser.json());
+router.use('/', ApiValidator);
 
 const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
 router.use(morgan('combined'));
