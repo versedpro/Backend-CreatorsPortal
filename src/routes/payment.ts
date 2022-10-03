@@ -14,7 +14,7 @@ router.get(
 );
 
 router.post(
-  ':collection_id/charge-card',
+  '/:collection_id/charge-card',
   paymentController.handleChargeCard
 );
 
