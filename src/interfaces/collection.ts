@@ -103,6 +103,7 @@ export interface GetOrganizationCollectionsRequest {
   oldest_date?: number;
   page: number;
   size: number;
+  date_sort?: string;
 }
 
 export interface DbGetOrganizationCollectionsRequest {
@@ -110,6 +111,7 @@ export interface DbGetOrganizationCollectionsRequest {
   values: string[];
   page: number;
   size: number;
+  date_sort?: string;
 }
 
 export interface GetCollectionsResponse {

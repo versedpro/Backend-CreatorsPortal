@@ -649,6 +649,15 @@ paths:
             format: int32
             default: 30
           required: false
+        - name: date_sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          required: false
       operationId: getAllOrganizationCollections
       summary: Get All Organization Collections
       responses:

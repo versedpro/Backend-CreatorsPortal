@@ -140,7 +140,7 @@ export async function handleGetCollections(req: IExpressRequest, res: ExpressRes
   try {
     const creatorId = req.params.organization_id || req.userId;
 
-    const { name, status, oldest_date, page, size } = req.query;
+    const { name, status, oldest_date, page, size, date_sort } = req.query;
 
     const response = await collectionService.getOrganizationCollections({
       creatorId: <string>creatorId,
@@ -150,6 +150,7 @@ export async function handleGetCollections(req: IExpressRequest, res: ExpressRes
       oldest_date: oldest_date ? parseInt(<string>oldest_date) : undefined,
       page: parseInt(<string>page || '1'),
       size: parseInt(<string>size || '30'),
+      date_sort: <string>date_sort,
     });
 
     return Response.success(res, {

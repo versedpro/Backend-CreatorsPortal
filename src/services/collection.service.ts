@@ -417,6 +417,7 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
     values,
     page: body.page,
     size: body.size,
+    date_sort: body.date_sort,
   });
 }
 

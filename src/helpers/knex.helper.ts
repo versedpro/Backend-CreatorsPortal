@@ -283,7 +283,7 @@ export class KnexHelper {
       .select()
       .joinRaw(rawQuery, values)
       .offset((page - 1) * size)
-      .orderBy('updated_at', 'desc')
+      .orderBy('updated_at', (request.date_sort || 'desc').toLowerCase())
       .limit(size);
 
     const allItems = result as CollectionInfo[];
