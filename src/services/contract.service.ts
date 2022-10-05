@@ -26,9 +26,9 @@ export class ContractService {
     this.signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
   }
 
-  async getDeployTransaction(body: DeployCollectionContractRequest): Promise<any> {
-    const factory = new ethers.Contract(this.lunaFactoryAddress, FACTORY_ABI, this.signer);
-    return factory.deployERC1155(
+
+  getDeployParams(body: DeployCollectionContractRequest): any[] {
+    return [
       body.collectionName,
       body.collectionSymbol,
       body.metadataUriPrefix,
@@ -39,14 +39,16 @@ export class ContractService {
       body.quantity || ethers.constants.MaxInt256,
       body.royalty,
       { gasLimit: 5000000 },
-    );
+    ];
   }
 
   async estimateDeploymentGas(body: DeployCollectionContractRequest): Promise<string | undefined> {
     try {
-      const tx = await this.getDeployTransaction(body);
+      const factory = new ethers.Contract(this.lunaFactoryAddress, FACTORY_ABI, this.signer);
+      const gasEstimate = await factory.estimateGas.deployERC1155(
+        ...this.getDeployParams(body),
+      );
       const provider = this.signer.provider;
-      const gasEstimate = await provider.estimateGas(tx);
       const gasPrice = await provider.getGasPrice();
       const est = gasEstimate.mul(gasPrice).toNumber();
       return parseFloat(ethers.utils.formatEther(est)).toFixed(6);
@@ -57,7 +59,10 @@ export class ContractService {
 
   async deployNftCollection(body: DeployCollectionContractRequest): Promise<any> {
     try {
-      const tx = await this.getDeployTransaction(body);
+      const factory = new ethers.Contract(this.lunaFactoryAddress, FACTORY_ABI, this.signer);
+      const tx = await factory.deployERC1155(
+        ...this.getDeployParams(body),
+      );
       const minedTx = await tx.wait();
       minedTx.logs = convertRpcLogEvents(minedTx.logs, FACTORY_ABI);
       Logger.Info('Completed deployment', minedTx);
