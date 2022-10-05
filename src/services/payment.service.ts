@@ -185,9 +185,10 @@ export async function chargeCard(request: { userId: string, collectionId: string
   } catch (err: any) {
     // Error code will be authentication_required if authentication is needed
     console.log('Error code is: ', err.code);
-    const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(err.raw.payment_intent.id);
-    console.log('PI retrieved: ', paymentIntentRetrieved.id);
+    console.log('Error message is: ', err.raw?.message);
     if (err.code === 'authentication_required') {
+      const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(err.raw.payment_intent.id);
+      console.log('PI retrieved: ', paymentIntentRetrieved.id);
       return { client_secret: paymentIntentRetrieved.client_secret!, requires_auth: false };
     }
   }
