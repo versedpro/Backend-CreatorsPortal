@@ -120,7 +120,6 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
     first_party_data: data.first_party_data,
     royalties: data.royalties,
     royalty_address: data.royalty_address,
-    payout_address: data.payout_address,
   };
 
   if (data.collection_id) {
@@ -206,7 +205,6 @@ async function getDeployRequestBody(collection: CollectionInfo): Promise<any> {
       collectionSymbol: collection.name.substring(0, 3).toUpperCase(),
       metadataUriPrefix: `${process.env.API_BASE_URL}/nft/${collection.id}/metadata/`,
       royaltyAddress: collection.royalty_address!,
-      payoutAddress: collection.payout_address!,
       tokenId: 1,
       quantity: nftItem.max_supply,
       price: nftItem!.price!.toString(),
@@ -293,7 +291,7 @@ function verifyCollectionReady(col: CollectionInfo): string {
   const errors: string[] = [];
   const {
     chain, name, description, about, agree_to_terms,
-    understand_irreversible_action, royalty_address, payout_address,
+    understand_irreversible_action, royalty_address,
   } = col;
   if (!chain) {
     errors.push('chain is required');
@@ -306,9 +304,6 @@ function verifyCollectionReady(col: CollectionInfo): string {
   }
   if (!royalty_address) {
     errors.push('royalty_address is required');
-  }
-  if (!payout_address) {
-    errors.push('payout_address is required');
   }
   if (!about) {
     errors.push('collection_about is required');

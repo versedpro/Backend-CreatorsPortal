@@ -55,7 +55,6 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       name,
       price,
       royalty_address,
-      payout_address,
       royalties,
       collection_name,
       collection_description,
@@ -85,9 +84,6 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
 
       if (!royalty_address) {
         errors.push('royalty_address is required');
-      }
-      if (!payout_address) {
-        errors.push('payout_address is required');
       }
       if (!royalties) {
         errors.push('royalties is required');

@@ -3,7 +3,6 @@ export interface DeployCollectionContractRequest {
   collectionSymbol: string;
   metadataUriPrefix: string;
   royaltyAddress: string;
-  payoutAddress: string;
   tokenId?: number;
   quantity?: number;
   price: string;

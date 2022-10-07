@@ -33,7 +33,6 @@ export class ContractService {
       body.collectionSymbol,
       body.metadataUriPrefix,
       body.royaltyAddress,
-      body.payoutAddress,
       body.tokenId,
       ethers.utils.parseEther(body.price),
       body.quantity || ethers.constants.MaxInt256,

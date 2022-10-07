@@ -221,11 +221,6 @@
         "type": "address"
       },
       {
-        "internalType": "address payable",
-        "name": "_payouter",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
         "name": "_tokenId",
         "type": "uint256"

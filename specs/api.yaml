@@ -567,9 +567,6 @@ paths:
                 royalty_address:
                   type: string
                   pattern: (\b0x[a-fA-F0-9]{40}\b)
-                payout_address:
-                  type: string
-                  pattern: (\b0x[a-fA-F0-9]{40}\b)
                 attributes:
                   type: string
                   description: |
@@ -1274,8 +1271,6 @@ components:
           minLength: 20
           maxLength: 1000
         royalty_address:
-          type: string
-        payout_address:
           type: string
         contract_address:
           type: string

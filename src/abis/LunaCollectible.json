@@ -23,11 +23,6 @@
       },
       {
         "internalType": "address",
-        "name": "_payouter",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_factory",
         "type": "address"
       }
@@ -117,6 +112,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pricePaid",
         "type": "uint256"
       }
     ],
@@ -394,6 +395,12 @@
         "internalType": "address",
         "name": "payoutAddress",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
     "name": "Withdraw",
@@ -836,19 +843,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "payoutAddress",
-    "outputs": [
-      {
-        "internalType": "address payable",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1142,19 +1136,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_newPayoutAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setPayoutAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "_royaltyPercent",
         "type": "uint256"
@@ -1243,8 +1224,27 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_payoutAddress",
+        "type": "address"
+      }
+    ],
     "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_adminWallet",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawToAdmin",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

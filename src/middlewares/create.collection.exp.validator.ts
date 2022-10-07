@@ -51,11 +51,6 @@ export const createCollectionExpValidator = () => {
       .trim()
       .matches(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))
       .bail(),
-    body('payout_address')
-      .optional()
-      .trim()
-      .matches(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))
-      .bail(),
     body('collection_name')
       .exists()
       .trim()
