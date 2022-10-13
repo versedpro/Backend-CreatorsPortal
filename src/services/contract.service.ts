@@ -49,7 +49,7 @@ export class ContractService {
       );
       const provider = this.signer.provider;
       const gasPrice = await provider.getGasPrice();
-      const est = gasEstimate.mul(gasPrice).toNumber();
+      const est = gasEstimate.mul(gasPrice);
       return parseFloat(ethers.utils.formatEther(est)).toFixed(6);
     } catch (error) {
       console.log(error);
