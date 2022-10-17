@@ -10,7 +10,7 @@ import {
 } from '../interfaces/organization';
 import { Logger } from '../helpers/Logger';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
-import { inviteExistsError } from '../interfaces';
+import { InviteExistsError } from '../interfaces';
 import { failure } from '../helpers/response.manager';
 
 export async function handleAddOrganization(req: Request, res: ExpressResponse): Promise<void> {
@@ -97,7 +97,7 @@ export async function handleInviteOrganization(req: Request, res: ExpressRespons
     }, StatusCodes.OK);
 
   } catch (err: any) {
-    if (err instanceof inviteExistsError) {
+    if (err instanceof InviteExistsError) {
       return failure(res, {
         message: err.message,
       }, StatusCodes.BAD_REQUEST);

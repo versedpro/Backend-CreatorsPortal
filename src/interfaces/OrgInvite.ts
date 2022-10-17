@@ -4,6 +4,11 @@ export enum OrgInviteStatus {
   EXPIRED = 'EXPIRED',
 }
 
+export enum OrgInviteType {
+  ADMIN_INVITED = 'ADMIN_INVITED',
+  SELF_INVITE = 'SELF_INVITE',
+}
+
 export interface OrgInvite {
   id: string;
   name: string;
@@ -11,6 +16,7 @@ export interface OrgInvite {
   email: string;
   email_sent: boolean;
   invite_code: string;
+  invite_type: OrgInviteType;
   status: OrgInviteStatus;
   expires_at: string;
   created_at: string;

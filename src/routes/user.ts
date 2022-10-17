@@ -12,7 +12,7 @@ import paymentRoutes from './payment';
 import {
   forgotPasswordValidator,
   loginUserValidator, resetPasswordValidator,
-  signUpUserValidator
+  signUpUserValidator, inviteUserValidator
 } from '../middlewares/onboarding.validator';
 import { userAuthValidator } from '../middlewares/auth.validator';
 
@@ -22,6 +22,12 @@ const jwtHelper = new JwtHelper({ publicKey: JWT_PUBLIC_KEY });
 // Add user
 // router.post('/:public_address', controller.handleAddUser);
 
+
+// Invite an organizaion
+router.post('/request-invite',
+  inviteUserValidator(),
+  onboardingController.handleInviteOrganization,
+);
 
 router.post(
   '/signup',

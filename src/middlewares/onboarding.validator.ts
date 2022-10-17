@@ -1,6 +1,27 @@
 import { Validator } from './validator';
 import { body, header } from 'express-validator';
 
+export const inviteUserValidator = () => {
+  return Validator.validate(([
+    body('email', 'email is required')
+      .exists()
+      .trim()
+      .isEmail()
+      .toLowerCase()
+      .bail(),
+    body('name')
+      .exists()
+      .trim()
+      .isLength({ min: 3, max: 30 })
+      .bail(),
+    body('contact_name')
+      .exists()
+      .trim()
+      .isLength({ min: 3, max: 30 })
+      .bail(),
+  ]));
+};
+
 export const signUpUserValidator = () => {
   return Validator.validate([
     body('email', 'email is required')
@@ -20,6 +41,10 @@ export const signUpUserValidator = () => {
       .bail(),
     body('invite_code', 'Valid invite_code is required')
       .exists()
+      .trim(),
+    body('invite_type', 'Valid invite_type is required')
+      .optional()
+      .isIn(['ADMIN_INVITED', 'SELF_INVITE'])
       .trim(),
     body('signature', 'signature is required if public_address is sent')
       .if(body('public_address').exists())

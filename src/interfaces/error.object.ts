@@ -17,7 +17,7 @@ export class InvalidSignatureError extends Error {
   }
 }
 
-export class inviteExistsError extends Error {
+export class InviteExistsError extends Error {
   constructor() {
     super('Invite has already been sent to this email');
   }

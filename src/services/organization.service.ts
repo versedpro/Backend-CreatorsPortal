@@ -15,9 +15,9 @@ import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
 import { s3UploadSingle } from '../helpers/aws/image.uploader';
 import { v4 as uuidv4 } from 'uuid';
-import { OrgInvite, OrgInviteStatus } from '../interfaces/OrgInvite';
+import { OrgInvite, OrgInviteStatus, OrgInviteType } from '../interfaces/OrgInvite';
 import randomstring from 'randomstring';
-import { inviteExistsError } from '../interfaces';
+import { InviteExistsError } from '../interfaces';
 import { Pagination } from '../interfaces/pagination';
 import { sendgridMail } from '../helpers/sendgrid.helper';
 import { dbTables, FRONTEND_URL, sendgrid } from '../constants';
@@ -139,7 +139,7 @@ export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite
   // expires in 30 days
   const existingRes = await KnexHelper.getOrganizationInvite({ email: request.email });
   if (existingRes.length > 0) {
-    throw new inviteExistsError();
+    throw new InviteExistsError();
   }
   const expiresAt = Date.now() + 2592000000;
   const inviteCode = randomstring.generate({
@@ -164,6 +164,7 @@ export async function addInvite(request: CreateInviteRequest): Promise<OrgInvite
     email: request.email,
     expires_at: new Date(expiresAt),
     invite_code: inviteCode,
+    invite_type: OrgInviteType.ADMIN_INVITED,
     email_sent: true,
   });
   return await getInvite({ id: result[0].id });

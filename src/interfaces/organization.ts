@@ -1,8 +1,10 @@
+import { OrgInviteType } from './OrgInvite';
 import { Pagination } from './pagination';
 import { InviteStatus } from 'aws-sdk/clients/chime';
 
 export enum OnboardingType {
   INVITED = 'INVITED',
+  SELF_INVITE = 'SELF_INVITE',
   ADMIN_CREATED = 'ADMIN_CREATED',
 }
 
@@ -89,8 +91,10 @@ export interface InsertInviteDbRequest {
   email: string;
   email_sent: boolean;
   invite_code: string;
+  invite_type: OrgInviteType;
   expires_at: Date;
 }
+
 export interface UpdateInviteDbRequest {
   id: string;
   invite_code: string;
@@ -101,6 +105,7 @@ export interface GetInviteRequest {
   id?: string;
   email?: string;
   invite_code?: string;
+  invite_type?: OrgInviteType;
 }
 
 export interface GetInvitesRequest {

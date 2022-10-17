@@ -12,17 +12,18 @@ import { dbTables, FRONTEND_URL, JWT_PUBLIC_KEY, sendgrid } from '../constants';
 import * as orgService from './organization.service';
 import { CustomError } from '../helpers';
 import { StatusCodes } from 'http-status-codes';
-import { OnboardingType, OrganizationInfo } from '../interfaces/organization';
+import { CreateInviteRequest, OnboardingType, OrganizationInfo } from '../interfaces/organization';
 import { JwtHelper, USER_TOKEN_EXPIRY_IN_SECONDS } from '../helpers/jwt.helper';
 import { RoleType } from '../interfaces/jwt.config';
 import { KnexHelper } from '../helpers/knex.helper';
 import { Logger } from '../helpers/Logger';
-import { OrgInviteStatus } from '../interfaces/OrgInvite';
+import { OrgInvite, OrgInviteStatus, OrgInviteType } from '../interfaces/OrgInvite';
 import randomstring from 'randomstring';
 import { sendgridMail } from '../helpers/sendgrid.helper';
 import * as CacheHelper from '../helpers/cache.helper';
 import { SignatureVerifier } from '../helpers/signature.verifier';
 import * as sigUtil from '@metamask/eth-sig-util';
+import { InviteExistsError } from '../interfaces';
 
 const saltRounds = 10;
 
@@ -69,11 +70,54 @@ async function invalidateOldAndSaveNewToken(body: GenTokenRequest): Promise<stri
   return token;
 }
 
+export async function addUserInvite(request: CreateInviteRequest): Promise<OrgInvite> {
+  request.name = request.name.trim();
+  request.email = request.email.trim().toLowerCase();
+  request.contact_name = request.contact_name.trim();
+
+  const existingOrg = await KnexHelper.getSingleOrganizationInfo({ email: request.email });
+  if (existingOrg) {
+    throw new CustomError(StatusCodes.BAD_REQUEST, 'Organization with email already exists');
+  }
+  // expires in 30 days
+  const existingRes = await KnexHelper.getOrganizationInvite({ email: request.email });
+  if (existingRes.length > 0) {
+    throw new InviteExistsError();
+  }
+  const expiresAt = Date.now() + 2592000000;
+  const inviteCode = randomstring.generate({
+    length: 40,
+    charset: 'alphanumeric',
+  });
+
+  // Send email invite to organization using Sendgrid
+  await sendgridMail.send({
+    from: sendgrid.sender,
+    to: request.email,
+    templateId: sendgrid.templates.orgInvite,
+    dynamicTemplateData: {
+      name: request.contact_name,
+      signup_link: `${FRONTEND_URL}/signup?invite_code=${inviteCode}&email=${request.email}&method=SELF_SIGN_UP`
+    }
+  });
+
+  const result = await KnexHelper.insertOrganizationInvite({
+    name: request.name,
+    contact_name: request.contact_name,
+    email: request.email,
+    expires_at: new Date(expiresAt),
+    invite_code: inviteCode,
+    invite_type: OrgInviteType.SELF_INVITE,
+    email_sent: true,
+  });
+  return await orgService.getInvite({ id: result[0].id });
+}
+
 // cache jwt token status in memory, if not present fetch from db and then cache.
 // have a cron job to delete expired token rows.
 // tables to create: user_auth, password_reset
 export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse> {
-  const { invite_code, password } = request;
+  const { invite_code, invite_type, password } = request;
   const email = request.email.toLowerCase();
   const invite = await orgService.getInvite({ invite_code });
   if (invite.status !== OrgInviteStatus.NOT_SIGNED_UP) {
@@ -109,7 +153,7 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
   if (existingOrgRes.length > 0) {
     Logger.Info('SIGN UP: Organization exists');
     organization = existingOrgRes[0] as OrganizationInfo;
-    if (organization.onboarding_type === OnboardingType.INVITED) {
+    if (organization.onboarding_type === OnboardingType.INVITED || organization.onboarding_type === OnboardingType.SELF_INVITE) {
       throw new CustomError(StatusCodes.BAD_REQUEST, 'User already exists');
     }
   } else {
@@ -118,7 +162,7 @@ export async function signUpUser(request: SignUpRequest): Promise<SignUpResponse
       name: invite.name,
       email: invite.email,
       type: 'BRAND',
-      onboarding_type: OnboardingType.INVITED,
+      onboarding_type: invite_type === OrgInviteType.SELF_INVITE ? OnboardingType.SELF_INVITE : OnboardingType.INVITED,
     };
     if (public_address) {
       // @ts-ignore

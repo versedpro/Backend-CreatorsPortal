@@ -4,7 +4,30 @@ import * as service from '../services/onboarding.service';
 import { StatusCodes } from 'http-status-codes';
 import { LoginRequest, SignUpRequest } from '../interfaces/onboarding';
 import { IExpressRequest } from '../interfaces/i.express.request';
-import { InvalidSignatureError } from '../interfaces';
+import { InvalidSignatureError, InviteExistsError } from '../interfaces';
+import { Logger } from '../helpers/Logger';
+import { CreateInviteRequest } from '../interfaces/organization';
+
+
+export async function handleInviteOrganization(req: Request, res: ExpressResponse): Promise<void> {
+  Logger.Info('Request Organization self-invite request', req.body);
+
+  try {
+    const invite = await service.addUserInvite(req.body as CreateInviteRequest);
+    return Response.success(res, {
+      message: 'Successful',
+      response: invite,
+    }, StatusCodes.OK);
+  }
+  catch (err: any) {
+    if (err instanceof InviteExistsError) {
+      return Response.failure(res, {
+        message: err.message,
+      }, StatusCodes.BAD_REQUEST);
+    }
+    return Response.handleError(res, err);
+  }
+}
 
 export async function handleSignUp(req: Request, res: ExpressResponse): Promise<void> {
   try {

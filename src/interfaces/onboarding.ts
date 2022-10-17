@@ -4,6 +4,7 @@ export interface SignUpRequest {
   email: string;
   password: string;
   invite_code: string;
+  invite_type?: string;
   public_address?: string;
   signature?: string;
   client_id: string;
