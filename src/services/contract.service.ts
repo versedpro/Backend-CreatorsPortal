@@ -3,8 +3,10 @@ import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-clien
 import { BigNumber, ethers } from 'ethers';
 import {
   AddMaxSupplyCallRequest,
-  DeployCollectionContractRequest, GetTokenBalanceCallRequest,
-  SetMintPriceCallRequest, SetRoyaltyRequest
+  DeployCollectionContractRequest,
+  GetTokenBalanceCallRequest,
+  SetMintPriceCallRequest,
+  SetRoyaltyRequest
 } from '../interfaces/contract';
 import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
@@ -15,15 +17,16 @@ const COLLECTION_ABI = require('../abis/LunaCollectible.json');
 
 export class ContractService {
   signer: DefenderRelaySigner;
+  provider: DefenderRelayProvider;
   lunaFactoryAddress: string;
 
   constructor(network: string) {
     this.lunaFactoryAddress = lunaFactoryAddresses[network];
     const credentials: ApiRelayerParams = defenderConfig[network];
     // @ts-ignore
-    const provider = new DefenderRelayProvider(credentials);
+    this.provider = new DefenderRelayProvider(credentials);
     // @ts-ignore
-    this.signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
+    this.signer = new DefenderRelaySigner(credentials, this.provider, { speed: 'fast' });
   }
 
 
@@ -65,6 +68,19 @@ export class ContractService {
       const minedTx = await tx.wait();
       minedTx.logs = convertRpcLogEvents(minedTx.logs, FACTORY_ABI);
       Logger.Info('Completed deployment', minedTx);
+      return minedTx;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async withdrawToAddress(body: { contractAddress: string, recipientAddress: string }) {
+    const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, this.signer);
+    try {
+      Logger.Info('Withdrawing to address', body.recipientAddress);
+      const tx = await collection.withdrawToAdmin(body.recipientAddress);
+      const minedTx = (await tx.wait());
+      Logger.Info('Completed payout contract call', minedTx);
       return minedTx;
     } catch (error) {
       console.log(error);
@@ -134,5 +150,9 @@ export class ContractService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async getAddressBalance(address: string): Promise<BigNumber> {
+    return await this.signer.getBalance(address);
   }
 }

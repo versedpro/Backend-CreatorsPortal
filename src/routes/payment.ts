@@ -13,6 +13,16 @@ router.get(
   paymentController.handleGetClientSecret
 );
 
+router.get(
+  '/bank-accounts',
+  paymentController.handleGetBankAccounts
+);
+
+router.post(
+  '/bank-accounts',
+  paymentController.handleCreateBankAccount
+);
+
 router.post(
   '/:collection_id/charge-card',
   paymentController.handleChargeCard

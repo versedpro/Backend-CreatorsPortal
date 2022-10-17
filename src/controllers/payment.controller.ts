@@ -1,6 +1,7 @@
 import { Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as paymentService from '../services/payment.service';
+import * as payoutService from '../services/payout.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
 import { CustomError } from '../helpers';
@@ -81,6 +82,54 @@ export async function handleStripeWebhook(req: any, res: ExpressResponse): Promi
       message: 'Success',
       response: {},
     }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleCreateBankAccount(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const creatorId = req.params.organization_id || req.userId;
+    if (!creatorId) {
+      throw new CustomError(StatusCodes.UNAUTHORIZED, '');
+    }
+    const response = await payoutService.createStripeAccount(creatorId);
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetBankAccounts(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const creatorId = req.params.organization_id || req.userId;
+    if (!creatorId) {
+      throw new CustomError(StatusCodes.UNAUTHORIZED, '');
+    }
+    const accounts = await payoutService.getStripeBankAccounts(creatorId);
+
+    return Response.success(res, {
+      message: 'Successful',
+      response: { items: accounts },
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetPrice(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const response = await payoutService.getPrice({
+      from: <string>req.query.from,
+      to: <string>req.query.to,
+    });
+
+    res.status(200).json(response);
+    return;
   } catch (err: any) {
     return Response.handleError(res, err);
   }

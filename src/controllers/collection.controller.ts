@@ -3,6 +3,7 @@
 import { Response as ExpressResponse } from 'express';
 import * as Response from '../helpers/response.manager';
 import * as collectionService from '../services/collection.service';
+import * as payoutService from '../services/payout.service';
 import { StatusCodes } from 'http-status-codes';
 import { IExpressRequest } from '../interfaces/i.express.request';
 import {
@@ -16,6 +17,7 @@ import { CustomError } from '../helpers';
 import { Logger } from '../helpers/Logger';
 import { UploadFilesData } from '../interfaces/organization';
 import { cleanupFiles } from '../handlers/file.cleanup.handler';
+import { PayoutInitiator, PayoutMethod } from '../interfaces/payout';
 
 export async function handleAddUserCollection(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   return handleAddCollection(req, res, CreatorType.USER);
@@ -207,6 +209,94 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
     }, StatusCodes.OK);
   } catch (err: any) {
     await cleanupFiles(req);
+    return Response.handleError(res, err);
+  }
+}
+
+
+export async function handleGetPayouts(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const collection_id = req.params.collection_id;
+
+    const { recipient_address, recipient_account_id, page, size, date_sort } = req.query;
+
+    const response = await payoutService.getCollectionPayouts({
+      collection_id: <string>collection_id,
+      recipient_address: <string>recipient_address,
+      recipient_account_id: <string>recipient_account_id,
+      page: parseInt(<string>page || '1'),
+      size: parseInt(<string>size || '30'),
+      date_sort: <string>date_sort,
+    });
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+
+export async function handleCreatePayout(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const organization_id = req.params.organization_id || req.userId;
+    console.log('req.userId', req.userId);
+    let initiated_by = PayoutInitiator.USER;
+    if (req.params.organization_id) {
+      initiated_by = PayoutInitiator.ADMIN;
+    }
+    const initiator_id = req.userId!;
+    const collection_id = req.params.collection_id;
+
+    if (initiated_by === PayoutInitiator.USER && !req.body.password) {
+      throw new CustomError(StatusCodes.BAD_REQUEST, 'Password is required');
+    }
+    const { recipient_address, recipient_account_id, password } = req.body;
+    const method = req.body.method as PayoutMethod;
+
+    const response = await payoutService.processPayout({
+      recipient_address: <string>recipient_address,
+      recipient_account_id: <string>recipient_account_id,
+      initiated_by,
+      initiator_id,
+      method,
+      password,
+      organization_id: organization_id!,
+      collection_id,
+    });
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+
+  } catch (err: any) {
+    Logger.Info(err);
+    return Response.handleError(res, err);
+  }
+}
+
+
+export async function handleGetMintTransactions(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const collectionId = req.params.collection_id;
+    const { page, size, date_sort, token_id } = req.query;
+
+    const response = await collectionService.getMints({
+      collection_id: collectionId,
+      token_id: <string>token_id,
+      page: parseInt(<string>page || '1'),
+      size: parseInt(<string>size || '30'),
+      date_sort: <string>date_sort,
+    });
+
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
     return Response.handleError(res, err);
   }
 }

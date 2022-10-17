@@ -15,6 +15,10 @@ export const dbTables = {
   userTokens: 'user_tokens',
   feesPayments: 'fees_payments',
   stripeCustomers: 'stripe_customers',
+  lastFetchedBlocks: 'last_fetched_blocks',
+  payouts: 'payouts',
+  mintTransactions: 'mint_transactions',
+  stripeConnectedAccounts: 'stripe_connected_accounts',
 };
 // Will make env variables later.
 export const ADMIN_ADDRESSES: string[] = (<string>process.env.ADMIN_ADDRESSES || '').split(','); // Fill up with permitted admin wallet addresses
@@ -64,3 +68,15 @@ export const stripeConfig = {
   endpointSecret: <string> process.env.STRIPE_SIGNATURE,
 };
 export const nodeEnv = <string> process.env.NODE_ENV;
+
+export const chainCurrency: { [network: string]: string } = {
+  ethereum: 'ETH',
+  polygon: 'MATIC',
+};
+
+export const coinbaseConfig = {
+  baseUrl: <string> process.env.COINBASE_API_URL,
+  apiKey: <string> process.env.COINBASE_API_KEY,
+  passphrase: <string> process.env.COINBASE_API_PASSPHRASE,
+  secret: <string> process.env.COINBASE_API_SECRET,
+};

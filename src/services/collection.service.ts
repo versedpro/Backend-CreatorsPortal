@@ -29,6 +29,7 @@ import * as CacheHelper from '../helpers/cache.helper';
 import axios from 'axios';
 import { PaymentPurpose } from '../interfaces/stripe.card';
 import { DbInsertPaymentRequest, PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
+import { GetMintsResponse, GetMintTransactionsRequest } from '../interfaces/mint.transaction';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -357,7 +358,15 @@ export async function getCollectionByIdAndCreator(body: GetCollectionRequest): P
   if (results.length === 0) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
   }
-  return results[0];
+  const collection = results[0];
+  if (collection.contract_address) {
+    // get balance
+
+    const contractService = ContractServiceRegistry.getService(collection.chain);
+    const balanceInWei = contractService.signer.getBalance(collection.contract_address);
+    collection.contract_balance = balanceInWei.toString();
+  }
+  return collection;
 }
 
 export async function getCollectionById(id: string): Promise<CollectionInfo> {
@@ -442,7 +451,7 @@ export async function updateCollection(request: UpdateCollectionRequest): Promis
     about: data.about,
     first_party_data: data.first_party_data,
     track_ip_addresses: data.track_ip_addresses === 'true',
-    // new ones
+    // get new ones
     main_link: data.main_link,
     social_links: data.social_links,
     whitelist_host_addresses: data.whitelist_host_addresses,
@@ -480,4 +489,8 @@ export async function saveAnsweredQuestions(body: AnswerRequest): Promise<FirstP
   });
   const result = await KnexHelper.insertMintAnswers(toBeSavedArr);
   return result as FirstPartyQuestionAnswer[];
+}
+
+export async function getMints(body: GetMintTransactionsRequest): Promise<GetMintsResponse> {
+  return await KnexHelper.getMints(body);
 }

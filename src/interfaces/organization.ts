@@ -40,7 +40,7 @@ export interface OrganizationInfo {
   facebook?: string;
   instagram?: string;
   discord?: string;
-  email?: string;
+  email: string;
   admin_name?: string;
   public_address?: string;
   image?: string;

@@ -9,6 +9,7 @@ import collectionRoutes from './collection';
 import nftRoutes from './nft';
 import mintRoutes from './mint';
 import userRoutes from './user';
+import priceRoutes from './price';
 import * as controller from '../controllers/organization.controller';
 
 import { JwtHelper } from '../helpers/jwt.helper';
@@ -34,6 +35,7 @@ router.use('/organizations', jwtHelper.requirePermission(RoleType.ADMIN), organi
 router.use('/nft', nftRoutes);
 router.use('/mint', mintRoutes);
 router.use('/users', userRoutes);
+router.use('/price', priceRoutes);
 
 router.use(routeError);
 

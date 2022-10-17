@@ -9,6 +9,7 @@ import {
 } from '../middlewares/create.collection.exp.validator';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 import { updateCollectionExpValidator } from '../middlewares/update.collection.exp.validator';
+import { payoutValidator } from '../middlewares/payout.validator';
 
 const router = express.Router({ mergeParams: true });
 
@@ -28,6 +29,9 @@ router.get('/', getCollectionExpValidator(), controller.handleGetCollections);
 
 router.get('/:collection_id', controller.handleGetCollectionById);
 
+router.post('/:collection_id/payouts', payoutValidator(), controller.handleCreatePayout);
+router.get('/:collection_id/payouts', controller.handleGetPayouts);
+
 router.put('/:collection_id',
   multerUpload.fields([
     { name: 'collection_image', maxCount: 1 },
@@ -37,5 +41,7 @@ router.put('/:collection_id',
   updateCollectionValidator,
   controller.handleUpdateCollection
 );
+
+router.get('/:collection_id/mints', controller.handleGetMintTransactions);
 
 export default router;

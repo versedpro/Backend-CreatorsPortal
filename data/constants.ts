@@ -12,6 +12,10 @@ export const dbTables = {
     userTokens: 'user_tokens',
     feesPayments: 'fees_payments',
     stripeCustomers: 'stripe_customers',
+    lastFetchedBlocks: 'last_fetched_blocks',
+    payouts: 'payouts',
+    mintTransactions: 'mint_transactions',
+    stripeConnectedAccounts: 'stripe_connected_accounts',
 };
 
 export const stagingCollectionToKeep = [

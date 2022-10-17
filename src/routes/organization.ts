@@ -3,6 +3,7 @@ import * as controller from '../controllers/organization.controller';
 import { multerUpload } from '../helpers/aws/image.uploader';
 import { createOrganizationValidator, getOrganizationValidator } from '../middlewares/create.organization.validator';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
+import * as paymentController from '../controllers/payment.controller';
 
 const router = express.Router();
 
@@ -42,6 +43,16 @@ router.put(
   multerUpload.fields([{ name: 'image', maxCount: 1 }, { name: 'banner', maxCount: 1 }]),
   cleanUpMulterFiles,
   controller.handleUpdateOrganization,
+);
+
+router.get(
+  '/:organization_id/payments/bank-accounts',
+  paymentController.handleGetBankAccounts
+);
+
+router.post(
+  '/:organization_id/payments/bank-accounts',
+  paymentController.handleCreateBankAccount
 );
 
 export default router;

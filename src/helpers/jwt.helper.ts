@@ -119,4 +119,30 @@ export class JwtHelper {
       }
     };
   }
+
+  requireAnyOfPermission(roleTypes: RoleType[]) {
+    return async (req: IExpressRequest, res: Response, next: NextFunction) => {
+      const token = req.headers['x-auth-token'];
+      if (!token) {
+        return this.respondError(res, 403, 'No API token');
+      }
+      try {
+        if (typeof token !== 'string') {
+          return this.respondError(res, 403, 'Invalid token');
+        }
+
+        const decoded = await this.verifyToken(token);
+        if (!(decoded.roleType && roleTypes.includes(decoded.roleType))) {
+          return this.respondError(res, 403, 'Invalid token');
+        }
+
+        req.token = token;
+        req.roleType = decoded.roleType;
+        req.userId = decoded.userId;
+        return next();
+      } catch (error: any) {
+        return this.respondError(res, 403, error);
+      }
+    };
+  }
 }

@@ -62,6 +62,7 @@ export interface CollectionInfo {
   checkout_font_color?: string;
   terms_and_condition_enabled?: string;
   terms_and_condition_link?: string;
+  contract_balance?: string;
   created_at?: string;
   updated_at?: string;
 }

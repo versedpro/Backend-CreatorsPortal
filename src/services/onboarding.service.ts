@@ -321,7 +321,7 @@ export async function changePassword(request: ChangePasswordRequest): Promise<bo
     templateId: sendgrid.templates.passwordResetSuccessful,
     dynamicTemplateData: {
       name: organization?.contact_name || '',
-      reset_password_link: `${FRONTEND_URL}/login`,
+      reset_password_link: `${FRONTEND_URL}/reset?email=${email}`,
     }
   });
 

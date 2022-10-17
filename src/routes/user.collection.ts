@@ -9,6 +9,7 @@ import {
 } from '../middlewares/create.collection.exp.validator';
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 import { updateCollectionExpValidator } from '../middlewares/update.collection.exp.validator';
+import { payoutValidator } from '../middlewares/payout.validator';
 
 const router = express.Router({ mergeParams: true });
 
@@ -37,5 +38,10 @@ router.put('/:collection_id',
   updateCollectionValidator,
   controller.handleUpdateCollection
 );
+
+router.post('/:collection_id/payouts', payoutValidator(), controller.handleCreatePayout);
+router.get('/:collection_id/payouts', controller.handleGetPayouts);
+router.get('/:collection_id/mints', controller.handleGetMintTransactions);
+
 
 export default router;

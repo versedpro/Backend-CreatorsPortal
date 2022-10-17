@@ -885,6 +885,209 @@ paths:
                 code: 401
                 message: Authentication required.
 
+  /organizations/{organization_id}/collections/{collection_id}/payouts:
+    parameters:
+      - name: organization_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - payout
+      summary: Payout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayoutRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+        '400':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+    get:
+      tags:
+        - payout
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: getCollectionPayouts
+      summary: Get collection payments
+      parameters:
+        - name: recipient_address
+          in: query
+          schema:
+            type: string
+            minLength: 2
+          required: false
+        - name: recipient_account_id
+          in: query
+          schema:
+            type: string
+            minLength: 2
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+        - name: date_sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          required: false
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllPayoutsResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 403
+                message: An admin auth key is required
+
+  /organizations/{organization_id}/payments/bank-accounts:
+    parameters:
+      - name: organization_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      summary: Create user bank account
+      tags:
+        - bank_account
+      description: A url is sent in the response, we should send this URL to the organization for them to complete their
+      operationId: createUserBankAccount
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBankAccountResponse'
+        '400':
+          description: If user already has an account
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 400
+                message: Account already exists
+    get:
+      tags:
+        - bank_account
+      summary: Get user bank accounts
+      operationId: getUserBankAccounts
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBankAccountsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse401'
+
+  /organizations/{organization_id}/collections/{collection_id}/mints:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    get:
+      tags:
+        - nft_collection
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+        - name: date_sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          required: false
+      operationId: getMintTransactions
+      summary: Get Mint Transactions
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMintTransactionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -894,6 +1097,17 @@ components:
     PluginAuth:
       type: http
       scheme: basic
+  responses:
+    ErrorResponse401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            error: true
+            code: 401
+            message: Authentication required.
   schemas:
     GenericResponse:
       properties:
@@ -1316,6 +1530,9 @@ components:
           description: Link to T&C
           type: string
           format: uri
+        contract_balance:
+          description: balance for collection contract
+          type: string
         created_at:
           type: string
           format: 'date-time'
@@ -1512,3 +1729,231 @@ components:
                   $ref: '#/components/schemas/Pagination'
                 items:
                   $ref: '#/components/schemas/OrganizationInvite'
+
+    Payout:
+      type: object
+      required:
+        - id
+        - collection_id
+        - chain
+        - method
+        - recipient
+        - amount
+        - currency
+        - amount_in_crypto
+        - initiated_by
+        - initiator_id
+        - paid_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        collection_id:
+          type: string
+          format: uuid
+        tx_hash:
+          type: string
+        chain:
+          $ref: '#/components/schemas/SupportedChain'
+        method:
+          type: string
+          enum:
+            - CRYPTO
+            - FIAT
+        recipient:
+          type: string
+        amount:
+          type: string
+        currency:
+          type: string
+        amount_in_fiat:
+          type: string
+        amount_in_crypto:
+          type: string
+        bank_name:
+          type: string
+        initiated_by:
+          type: string
+          enum:
+            - ADMIN
+            - USER
+        initiator_id:
+          type: string
+        paid_at:
+          type: string
+          format: 'date-time'
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
+
+    GetAllPayoutsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Payout'
+
+    MintTransaction:
+      type: object
+      required:
+        - id
+        - collection_id
+        - contract_address
+        - to_address
+        - quantity
+        - price
+        - minted_at
+        - chain
+        - tx_hash
+        - method
+      properties:
+        id:
+          type: string
+          format: uuid
+        collection_id:
+          type: string
+          format: uuid
+        tx_hash:
+          type: string
+        chain:
+          $ref: '#/components/schemas/SupportedChain'
+        contract_address:
+          type: string
+        to_address:
+          type: string
+        quantity:
+          type: number
+        price:
+          type: string
+        minted_at:
+          type: string
+          format: 'date-time'
+        created_at:
+          type: string
+          format: 'date-time'
+        updated_at:
+          type: string
+          format: 'date-time'
+
+    GetMintTransactionResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MintTransaction'
+
+    PayoutRequest:
+      type: object
+      required:
+        - method
+      properties:
+        recipient_address:
+          type: string
+          pattern: (\b0x[a-fA-F0-9]{40}\b)
+        method:
+          type: string
+          enum:
+            - CRYPTO
+            - FIAT
+        recipient_account_id:
+          type: string
+
+    PayoutResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Payout'
+
+    CreateBankAccountResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CreateBankAccountData'
+
+    CreateBankAccountData:
+      type: object
+      required:
+        - url
+        - created_at
+        - expires_at
+      properties:
+        url:
+          type: string
+          format: uri
+        created_at:
+          type: number
+        expires_at:
+          type: number
+
+    BankAccount:
+      type: object
+      required:
+        - id
+        - country
+        - currency
+        - last4
+        - status
+      properties:
+        id:
+          type: string
+        account_holder_name:
+          type: string
+        account_holder_type:
+          type: string
+          enum:
+            - individual
+            - company
+        account_type:
+          type: string
+        bank_name:
+          type: string
+        country:
+          type: string
+          description: Two-letter ISO code representing the country the bank account is located in.
+        currency:
+          type: string
+        fingerprint:
+          type: string
+        last4:
+          type: string
+        metadata:
+          type: object
+        routing_number:
+          type: string
+        status:
+          type: string
+          enum:
+            - new
+            - validated
+            - verified
+            - verrification_failed
+            - errored
+
+    GetBankAccountsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BankAccount'

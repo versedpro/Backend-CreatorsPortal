@@ -156,6 +156,43 @@ paths:
                 code: 401
                 message: Authentication required.
 
+  /price:
+    get:
+      tags:
+        - price
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: getAssetPrice
+      summary: Get asset price in another currency
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: to
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: true
+                code: 401
+                message: Authentication required.
+
 components:
   securitySchemes:
     PluginAuth:
@@ -391,3 +428,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FirstPartyAnswers'
+
+    Price:
+      type: object
+      required:
+        - from
+        - to
+        - amount
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        amount:
+          type: string

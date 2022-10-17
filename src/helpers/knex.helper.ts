@@ -36,6 +36,9 @@ import {
   FeePayment,
   PaymentActive
 } from '../interfaces/PaymentRequest';
+import { DbGetPayoutsRequest, DbInsertPayout, GetPayoutsResponse, Payout } from '../interfaces/payout';
+import { DbInsertStripeAccount, GetStripeAccount, StripeAccount } from '../interfaces/stripe.account';
+import { GetMintsResponse, GetMintTransactionsRequest, MintTransaction } from '../interfaces/mint.transaction';
 
 export class KnexHelper {
   /*
@@ -463,5 +466,86 @@ export class KnexHelper {
       .update({ status: 'EXPIRED' });
     Logger.Info(`Expired ${updated} fee payments`);
     return updated;
+  }
+
+  static async getPayouts(request: DbGetPayoutsRequest): Promise<GetPayoutsResponse> {
+    const { page, size, rawQuery, values } = request;
+
+    const countResult = await knex(dbTables.payouts)
+      .count('* as count')
+      .joinRaw(rawQuery, values)
+      .first();
+
+    const result = await knex(dbTables.payouts)
+      .select()
+      .joinRaw(rawQuery, values)
+      .offset((page - 1) * size)
+      .orderBy('updated_at', (request.date_sort || 'desc').toLowerCase())
+      .limit(size);
+
+    const allItems = result as Payout[];
+    const count = parseInt(countResult?.count.toString() || '0');
+    const pagination: Pagination = {
+      page,
+      size: allItems.length,
+      last_page: Math.ceil(count / size),
+      total_count: count,
+    };
+
+    return { pagination, items: allItems };
+  }
+
+  static async insertPayout(body: DbInsertPayout): Promise<Payout> {
+    const res = await knex(dbTables.payouts)
+      .insert(body)
+      .returning('*');
+    return res[0];
+  }
+
+  static async insertStripeAccount(body: DbInsertStripeAccount): Promise<StripeAccount> {
+    const res = await knex(dbTables.stripeConnectedAccounts)
+      .insert(body)
+      .returning('*');
+    return res[0];
+  }
+
+  static async getStripeAccount(body: GetStripeAccount): Promise<StripeAccount | undefined> {
+    const result = await knex(dbTables.stripeConnectedAccounts)
+      .select()
+      .where(body)
+      .limit(1);
+    if (result.length > 0) {
+      return result[0];
+    }
+  }
+
+  static async getMints(request: GetMintTransactionsRequest): Promise<GetMintsResponse> {
+    const { page, size, collection_id, date_sort, token_id } = request;
+    const whereCheck: { collection_id: string, token_id?: string } = { collection_id };
+    if (token_id) {
+      whereCheck.token_id = token_id;
+    }
+    const countResult = await knex(dbTables.mintTransactions)
+      .count('* as count')
+      .where(whereCheck)
+      .first();
+
+    const result = await knex(dbTables.mintTransactions)
+      .select()
+      .where(whereCheck)
+      .offset((page - 1) * size)
+      .orderBy('minted_at', (date_sort || 'desc').toLowerCase())
+      .limit(size);
+
+    const allItems = result as MintTransaction[];
+    const count = parseInt(countResult?.count.toString() || '0');
+    const pagination: Pagination = {
+      page,
+      size: allItems.length,
+      last_page: Math.ceil(count / size),
+      total_count: count,
+    };
+
+    return { pagination, items: allItems };
   }
 }
