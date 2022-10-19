@@ -163,12 +163,10 @@ export async function handleGetCollections(req: IExpressRequest, res: ExpressRes
 export async function handleGetCollectionById(req: IExpressRequest, res: ExpressResponse): Promise<void> {
   try {
     const { collection_id: collectionId } = req.params;
-    const creatorId = req.params.organization_id || req.userId;
-
+    const organizationId = req.params.organization_id || req.userId;
 
     const response = await collectionService.getCollectionByIdAndCreator({
-      creatorId: creatorId!,
-      creatorType: CreatorType.ADMIN,
+      organizationId: organizationId!,
       collectionId
     });
 
@@ -185,13 +183,12 @@ export async function handleUpdateCollection(req: IExpressRequest, res: ExpressR
   Logger.Info('Update Collection request', req.body);
   try {
     const { collection_id: collectionId } = req.params;
-    const creatorId = req.params.organization_id || req.userId;
+    const organizationId = req.params.organization_id || req.userId;
 
     const data = req.body as UpdateCollectionData;
 
     const collection = await collectionService.updateCollection({
-      creatorId: creatorId!,
-      creatorType: CreatorType.ADMIN,
+      organizationId: organizationId!,
       collectionId,
       data,
       files: req.files as UploadFilesData,
