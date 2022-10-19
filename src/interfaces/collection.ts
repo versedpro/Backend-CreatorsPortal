@@ -91,8 +91,7 @@ export enum NftCollectionStatus {
 }
 
 export interface GetCollectionRequest {
-  creatorId: string;
-  creatorType: CreatorType;
+  organizationId: string;
   collectionId: string;
 }
 
@@ -163,8 +162,7 @@ export interface DbUpdateCollectionData {
 }
 
 export interface UpdateCollectionRequest {
-  creatorId: string,
-  creatorType: CreatorType;
+  organizationId: string,
   collectionId: string,
   data: UpdateCollectionData,
   files: UploadFilesData;

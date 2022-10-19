@@ -94,7 +94,7 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
   // find if organization or user exists
   const creatorId = await getCreatorId(request.creatorId);
 
-  const folder = `${request.creatorType.toLowerCase()}/${creatorId}/${collectionId}`;
+  const folder = `${creatorId}/${collectionId}`;
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files ? Object.keys(files).length : 0);
@@ -353,7 +353,7 @@ function verifyNftReady(item: NftItem): string {
 export async function getCollectionByIdAndCreator(body: GetCollectionRequest): Promise<CollectionInfo> {
   const results = await KnexHelper.getNftCollectionByParams({
     id: body.collectionId,
-    organization_id: body.creatorId,
+    organization_id: body.organizationId,
   });
   if (results.length === 0) {
     throw new CustomError(StatusCodes.NOT_FOUND, 'Collection does not exist');
@@ -426,15 +426,15 @@ export async function getOrganizationCollections(body: GetOrganizationCollection
 }
 
 export async function updateCollection(request: UpdateCollectionRequest): Promise<CollectionInfo | undefined> {
-  const { creatorId, collectionId, data, files } = request;
+  const { organizationId, collectionId, data, files } = request;
 
   Logger.Info('files', files);
-  await getCollectionByIdAndCreator({ creatorId: creatorId, creatorType: request.creatorType, collectionId });
+  await getCollectionByIdAndCreator({ organizationId: organizationId, collectionId });
 
   // // find if organization or user exists
   // const creatorId = await getCreatorId(request.creatorId);
 
-  const folder = `${request.creatorType.toLowerCase()}/${creatorId}/${collectionId}`;
+  const folder = `${organizationId}/${collectionId}`;
 
   // upload images
   Logger.Info('Number of files to be uploaded for collection', collectionId, files?.length);
