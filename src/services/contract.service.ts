@@ -153,6 +153,6 @@ export class ContractService {
   }
 
   async getAddressBalance(address: string): Promise<BigNumber> {
-    return await this.signer.getBalance(address);
+    return await this.provider.getBalance(address);
   }
 }
