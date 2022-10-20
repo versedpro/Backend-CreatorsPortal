@@ -363,7 +363,7 @@ export async function getCollectionByIdAndCreator(body: GetCollectionRequest): P
     // get balance
 
     const contractService = ContractServiceRegistry.getService(collection.chain);
-    const balanceInWei = contractService.getAddressBalance(collection.contract_address);
+    const balanceInWei = await contractService.getAddressBalance(collection.contract_address);
     collection.contract_balance = balanceInWei.toString();
   }
   return collection;
