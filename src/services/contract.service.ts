@@ -78,7 +78,7 @@ export class ContractService {
     const collection = new ethers.Contract(body.contractAddress, COLLECTION_ABI, this.signer);
     try {
       Logger.Info('Withdrawing to address', body.recipientAddress);
-      const tx = await collection.withdrawToAdmin(body.recipientAddress);
+      const tx = await collection.withdrawToAdmin(body.recipientAddress, { gasLimit: 50000 });
       const minedTx = (await tx.wait());
       Logger.Info('Completed payout contract call', minedTx);
       return minedTx;
