@@ -66,11 +66,6 @@ export const createCollectionExpValidator = () => {
       .trim()
       .isLength({ min: 10, max: 1000 })
       .bail(),
-    body('agree_to_terms')
-      .optional()
-      .trim()
-      .default('false')
-      .bail(),
     body('understand_irreversible_action')
       .optional()
       .trim()

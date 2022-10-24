@@ -47,7 +47,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       data.royalties = parseFloat(req.body.royalties);
     }
 
-    data.agree_to_terms = JSON.parse(req.body.agree_to_terms || false);
+    data.agree_to_terms = true;
     data.understand_irreversible_action = JSON.parse(req.body.understand_irreversible_action || false);
     data.track_ip_addresses = JSON.parse(req.body.track_ip_addresses || false);
     data.create_contract = JSON.parse(req.body.create_contract || false);
