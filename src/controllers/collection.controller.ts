@@ -80,7 +80,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       if (!['ethereum', 'polygon'].includes(chain)) {
         errors.push('Supported chain is required');
       }
-      if (!price) {
+      if (price === undefined) {
         errors.push('price is required');
       }
 

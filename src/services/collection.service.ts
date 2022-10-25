@@ -344,7 +344,7 @@ function verifyNftReady(item: NftItem): string {
   if (!image) {
     errors.push('image is required');
   }
-  if (!price) {
+  if (price === undefined) {
     errors.push('price is required');
   }
   return errors.join(', ');
