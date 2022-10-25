@@ -169,7 +169,7 @@ export async function createConnectedAccount(organization: { email: string, id: 
         account: existingAccount.account_id,
         refresh_url: `${FRONTEND_URL}/settings/bank-accounts`,
         return_url: `${FRONTEND_URL}/settings/bank-accounts`,
-        type: 'account_update',
+        type: 'account_onboarding',
       });
       Logger.Info('accountLink for update: ', accountLink);
       return {
