@@ -286,7 +286,7 @@ export async function changePassword(request: ChangePasswordRequest): Promise<bo
   Logger.Info(new Date().getTime(), new Date(otpRes[0].expires_at).getTime());
   if (otpRes.length === 0) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
-  } else if (new Date().getUTCMilliseconds() > new Date(otpRes[0].expires_at).getUTCMilliseconds()) {
+  } else if (new Date().getTime() > new Date(otpRes[0].expires_at).getTime()) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'OTP has expired');
   }
 
