@@ -239,7 +239,7 @@ async function getGasPrice(collection: CollectionInfo, paymentOption: PaymentOpt
       if (paymentOption === PaymentOption.CREDIT_CARD) {
         Logger.Info('Paying with credit card');
         // Get estimate in USD.
-        const ethToUSD: number = (await axios.get('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD')).data.USD;
+        const ethToUSD: number = (await axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${paymentData.currency}&tsyms=USD`)).data.USD;
         let gasEstimateUSDFloat = (parseFloat(gasPrice!) * ethToUSD);
         if (gasEstimateUSDFloat < 0.50) {
           gasEstimateUSDFloat = 0.50;
