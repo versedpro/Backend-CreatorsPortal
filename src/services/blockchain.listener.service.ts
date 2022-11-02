@@ -10,7 +10,7 @@ import { PaymentPurpose } from '../interfaces/stripe.card';
 import { Logger } from '../helpers/Logger';
 import { BigNumber } from 'bignumber.js';
 
-const FACTORY_ABI = require('../abis/LunaFactory.json');
+const FACTORY_ABI = require('../abis/InsomniaFactory.json');
 const networks = ['ethereum', 'polygon'];
 
 export function runListener() {

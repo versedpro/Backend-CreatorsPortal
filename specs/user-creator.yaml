@@ -364,6 +364,133 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse401'
 
+  /me/collections/{collection_id}/assets:
+    parameters:
+      - name: collection_id
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      tags:
+        - nft_collection
+      security:
+        - ApiKeyAuth: [ ]
+      operationId: addNftCollectionAssets
+      summary: Upload up to 20 assets at once for a collection
+      description: |
+        Upload a max of 20 asset files,
+        For each file, also add the asset data, the file_id is a randomly generated id on your end
+        it is just for the purpose of identifying the asset_id
+      requestBody:
+        content:
+          multipart/form-data: # Media type
+            encoding:
+              assets:
+                contentType: image/png, image/jpeg, image/gif, video/mp4
+            schema: # Request payload
+              type: object
+              required:
+                - assets
+                - assets_data
+              properties:
+                assets:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                assets_data:
+                  description: |
+                    JSON stringified array of AssetUploadData array
+                  type: string
+                  items:
+                    $ref: '#/components/schemas/AssetUploadData'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCollectionAssetResponse'
+    put:
+      tags:
+        - nft_collection
+      summary: Update assets data; e.g name, quantity, price, attributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCollectionAssetDataRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+    delete:
+      tags:
+        - nft_collection
+      summary: Delete assets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAssetRequest'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveCollectionAssetsResponse'
+    get:
+      tags:
+        - nft_collection
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 1
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: number
+            format: int32
+            default: 30
+          required: false
+        - name: assets_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+        - name: date_sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          required: false
+      operationId: getCollectionAssets
+      summary: Get All Collection Assets
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollectionAssetsResponse'
+
   /me/collections/{collection_id}:
     parameters:
       - name: collection_id
@@ -1539,3 +1666,179 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MintTransaction'
+
+    TokenFormat:
+      type: string
+      enum:
+        - ERC1155
+
+    NftItem:
+      type: object
+      required:
+        - name
+        - amount
+      properties:
+        name:
+          minLength: 3
+          maxLength: 30
+        amount:
+          type: integer
+          format: int32
+          default: 1
+          minimum: 1
+        image:
+          type: string
+          format: uri
+        image_64:
+          type: string
+          format: uri
+        image_256:
+          type: string
+          format: uri
+        image_512:
+          type: string
+          format: uri
+        image_data:
+          type: string
+        royalties:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: percentage, e.g 7
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NftAttribute'
+        description:
+          type: string
+        external_url:
+          type: string
+        chain:
+          type: string
+        background_color:
+          type: string
+        token_format:
+          $ref: '#/components/schemas/TokenFormat'
+        animation_url:
+          type: string
+        youtube_url:
+          type: string
+        contract_address:
+          type: string
+        token_hash:
+          type: string
+        token_uri:
+          type: string
+
+    RemoveAssetRequest:
+      type: object
+      required:
+        - assets_ids
+      properties:
+        assets_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    AssetUploadData:
+      type: object
+      required:
+        - file_id
+        - name
+        - price
+      properties:
+        file_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          maxLength: 40
+        quantity:
+          type: integer
+        price:
+          type: number
+        attributes:
+          type: string
+          description: |
+            JSON stringified array of NftAttribute object
+          items:
+            $ref: '#/components/schemas/NftAttribute'
+
+    AddCollectionAssetResponse:
+      example:
+        {
+          "error": false,
+          "code": 200,
+          "data": {
+            "your_file_id": "601b746a-e1ac-481f-8e27-d5aa8d7bb4c2"
+          },
+          "message": "Successful"
+        }
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+
+    RemoveCollectionAssetsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: string
+                format: uuid
+
+    GetCollectionAssetsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NftItem'
+
+    AssetUpdateData:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          maxLength: 40
+        quantity:
+          type: integer
+        price:
+          type: number
+        attributes:
+          type: string
+          description: |
+            JSON stringified array of NftAttribute object
+          items:
+            $ref: '#/components/schemas/NftAttribute'
+
+    UpdateCollectionAssetDataRequest:
+      type: object
+      required:
+        - assets_data
+      properties:
+        assets_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetUpdateData'

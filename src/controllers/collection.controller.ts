@@ -51,6 +51,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
     data.understand_irreversible_action = JSON.parse(req.body.understand_irreversible_action || false);
     data.track_ip_addresses = JSON.parse(req.body.track_ip_addresses || false);
     data.create_contract = JSON.parse(req.body.create_contract || false);
+    data.is_multiple_nft = JSON.parse(req.body.is_multiple_nft || false);
     data.payment_option = req.body.payment_option || PaymentOption.CRYPTO;
     const {
       chain,
@@ -80,7 +81,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       if (!['ethereum', 'polygon'].includes(chain)) {
         errors.push('Supported chain is required');
       }
-      if (price === undefined) {
+      if ((!data.is_multiple_nft) && (price === undefined)) {
         errors.push('price is required');
       }
 
@@ -129,6 +130,7 @@ export async function handleAddCollection(req: IExpressRequest, res: ExpressResp
       response: collection,
     }, StatusCodes.OK);
   } catch (err: any) {
+    // console.error(err);
     await cleanupFiles(req);
     return Response.handleError(res, err);
   }
@@ -289,6 +291,89 @@ export async function handleGetMintTransactions(req: IExpressRequest, res: Expre
       date_sort: <string>date_sort,
     });
 
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleAddCollectionAssets(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  Logger.Info('Upload assets request', req.body);
+  try {
+    const organizationId = req.params.organization_id || req.userId;
+    const collectionId = req.params.collection_id;
+    const assetIdMap = await collectionService.addCollectionAssets({
+      organizationId: organizationId!,
+      collectionId,
+      files: req.files as Express.Multer.File[],
+      assets_data: req.body.assets_data,
+    });
+    return Response.success(res, {
+      message: 'Successful',
+      response: assetIdMap,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    await cleanupFiles(req);
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleGetCollectionAssets(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const { page, size, date_sort, assets_ids } = req.query;
+    const collectionId = req.params.collection_id;
+
+    const response = await collectionService.getCollectionAssets({
+      collection_id: collectionId,
+      assets_ids: <string[]>assets_ids,
+      page: parseInt(<string>page || '1'),
+      size: parseInt(<string>size || '30'),
+      date_sort: <string>date_sort,
+    });
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+export async function handleDeleteCollectionAssets(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const organizationId = req.params.organization_id || req.userId;
+    const { assets_ids } = req.body;
+    const collectionId = req.params.collection_id;
+
+    const response = await collectionService.removeCollectionAssets({
+      organizationId: organizationId!,
+      collectionId: collectionId,
+      assets_ids,
+    });
+    return Response.success(res, {
+      message: 'Successful',
+      response,
+    }, StatusCodes.OK);
+  } catch (err: any) {
+    return Response.handleError(res, err);
+  }
+}
+
+
+export async function handleUpdateCollectionAssets(req: IExpressRequest, res: ExpressResponse): Promise<void> {
+  try {
+    const organizationId = req.params.organization_id || req.userId;
+    const { assets_data } = req.body;
+    const collectionId = req.params.collection_id;
+
+    const response = await collectionService.updateCollectionAssets({
+      organizationId: organizationId!,
+      collectionId: collectionId,
+      assets_data,
+    });
     return Response.success(res, {
       message: 'Successful',
       response,

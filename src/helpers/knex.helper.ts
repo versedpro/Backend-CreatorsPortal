@@ -20,8 +20,8 @@ import {
   CollectionInfo,
   DbGetOrganizationCollectionsRequest,
   DbUpdateCollectionData, DbUpdateCollectionPayment,
-  FirstPartyQuestionAnswerInsertData,
-  GetCollectionsResponse
+  FirstPartyQuestionAnswerInsertData, GetCollectionAssetsRequest, GetCollectionAssetsResponse,
+  GetCollectionsResponse, UpdateCollectionAssetData
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
@@ -231,7 +231,30 @@ export class KnexHelper {
     return knex(dbTables.nftItems).insert(metadata);
   }
 
+  static async attachMetadataTokenId(collectionId: string): Promise<any> {
+    return knex.raw(`DO $$
+          DECLARE
+          identifier UUID;
+          counter INTEGER := 1;
+          BEGIN
+          FOR identifier IN SELECT id FROM public.nft_items WHERE collection_id = '${collectionId}'
+          \tLOOP
+          \tUPDATE nft_items\tSET token_id=counter WHERE id=identifier;
+          \tcounter := counter + 1;
+          \tEND LOOP;
+          END$$;`
+    );
+  }
+
   static async upsertMetadata(metadata: NftItem): Promise<any> {
+    return knex(dbTables.nftItems).insert(metadata)
+      .onConflict(['collection_id', 'token_id'])
+      .merge()
+      .onConflict(['id'])
+      .merge();
+  }
+
+  static async bulkUpsertMetadata(metadata: NftItem[]): Promise<any> {
     return knex(dbTables.nftItems).insert(metadata)
       .onConflict(['collection_id', 'token_id'])
       .merge()
@@ -548,4 +571,65 @@ export class KnexHelper {
 
     return { pagination, items: allItems };
   }
+
+  static async getNftsByIds(ids: string[]): Promise<NftItem[]> {
+    const result = await knex(dbTables.nftItems).select().whereRaw('id IN (?)', ids);
+    return result as NftItem[];
+  }
+
+  static async deleteNftsByIds(ids: string[]): Promise<{ id: string, image?: string }[]> {
+    const result = await knex(dbTables.nftItems).delete().whereRaw('id IN (?)', ids).returning(['id', 'image']);
+    return result as unknown as { id: string, image?: string }[];
+  }
+
+  static async getCollectionAssets(request: GetCollectionAssetsRequest): Promise<GetCollectionAssetsResponse> {
+    const { page, size, collection_id, date_sort, assets_ids } = request;
+    const whereCheck: { collection_id: string } = { collection_id };
+
+    // const countResult = await knex(dbTables.mintTransactions)
+    //   .count('* as count')
+    //   .where(whereCheck)
+    //   .first();
+
+    const countQuery = knex(dbTables.nftItems)
+      .count('* as count')
+      .where(whereCheck);
+
+    let countResult;
+    if (assets_ids && (assets_ids.length > 1)) {
+      countResult = await countQuery.andWhereRaw('id IN (?)', assets_ids).first();
+    } else {
+      countResult = await countQuery.first();
+    }
+
+    const resultQuery = knex(dbTables.nftItems)
+      .select()
+      .where(whereCheck);
+    if (assets_ids && (assets_ids.length > 1)) {
+      resultQuery.andWhereRaw('id IN (?)', assets_ids);
+    }
+    const result = await resultQuery.offset((page - 1) * size)
+      .orderBy('created_at', (date_sort || 'desc').toLowerCase())
+      .limit(size);
+
+    const allItems = result as NftItem[];
+    const count = parseInt(countResult?.count.toString() || '0');
+    const pagination: Pagination = {
+      page,
+      size: allItems.length,
+      last_page: Math.ceil(count / size),
+      total_count: count,
+    };
+
+    return { pagination, items: allItems };
+  }
+
+  static async updateNftItem(id: string, body: UpdateCollectionAssetData): Promise<number> {
+    return knex(dbTables.nftItems)
+      .update(body)
+      .where({
+        id,
+      });
+  }
+
 }

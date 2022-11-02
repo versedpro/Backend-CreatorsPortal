@@ -275,6 +275,15 @@ components:
         image:
           type: string
           format: uri
+        image_64:
+          type: string
+          format: uri
+        image_256:
+          type: string
+          format: uri
+        image_512:
+          type: string
+          format: uri
         image_data:
           type: string
         royalties:

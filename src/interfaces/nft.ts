@@ -21,18 +21,21 @@ export interface NftItem {
   collection_id: string;
   token_format: string;
   chain: string;
-  token_id: string;
+  token_id?: string;
   image?: string;
+  image_256?: string;
+  image_512?: string;
+  image_64?: string;
   image_data?: string;
   external_url?: string;
-  description: string;
+  description?: string;
   name: string;
   attributes?: Attribute[] | string;
   background_color?: string;
   animation_url?: string;
   youtube_url?: string;
   amount?: number;
-  max_supply?: number;
+  max_supply?: string;
   price?: number;
   royalties?: string;
 }

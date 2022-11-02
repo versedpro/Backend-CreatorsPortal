@@ -1,5 +1,7 @@
 import { Pagination } from './pagination';
 import { UploadFilesData } from './organization';
+import { NftItem } from './nft';
+import { BigNumber, BigNumberish } from 'ethers';
 
 export enum FirstPartyDatumType {
   SHORT_TEXT = 'SHORT_TEXT',
@@ -31,6 +33,7 @@ export interface CreateCollectionData {
   track_ip_addresses?: boolean;
   first_party_data?: string;
   create_contract: boolean;
+  is_multiple_nft?: boolean;
   payment_option: PaymentOption;
 }
 
@@ -43,7 +46,7 @@ export interface CollectionInfo {
   description?: string;
   royalties?: number;
   about: string;
-  status?: string;
+  status?: NftCollectionStatus;
   royalty_address?: string;
   payout_address?: string;
   contract_address?: string;
@@ -63,6 +66,7 @@ export interface CollectionInfo {
   terms_and_condition_enabled?: string;
   terms_and_condition_link?: string;
   contract_balance?: string;
+  is_multiple_nft?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -209,3 +213,76 @@ export interface CreateCollectionResponse extends CollectionInfo {
   fees_estimate_fiat?: string;
   currency: string;
 }
+
+export interface AddCollectionAssetData {
+  file_id: string;
+  name: string;
+  quantity?: number;
+  price: number;
+  attributes?: string;
+}
+
+export interface AddCollectionAssetRequest {
+  organizationId: string,
+  collectionId: string,
+  files: Express.Multer.File[];
+  assets_data: AddCollectionAssetData[];
+}
+
+export interface RemoveCollectionAssetRequest {
+  organizationId: string,
+  collectionId: string,
+  assets_ids: string[];
+}
+
+export interface AssetUploadResponseData {
+  [fieldname: string]: string;
+}
+
+export interface GetCollectionAssetsRequest {
+  collection_id: string;
+  assets_ids?: string[];
+  page: number;
+  size: number;
+  date_sort?: string;
+}
+
+export interface GetCollectionAssetsResponse {
+  pagination: Pagination;
+  items: NftItem[];
+}
+
+export interface UpdateCollectionAssetData {
+  id: string;
+  name?: string;
+  quantity?: number;
+  price?: number;
+  attributes?: string;
+}
+
+export interface UpdateCollectionAssetRequest {
+  organizationId: string,
+  collectionId: string,
+  assets_data: UpdateCollectionAssetData[];
+}
+
+export interface GetDeployRequestBodyResponse {
+  collectionName: string;
+  collectionSymbol: string;
+  metadataUriPrefix: string;
+  royaltyAddress: string;
+  tokenCount: number;
+  mintPrices: BigNumber[];
+  maxSupplies: BigNumberish[];
+  royalty: number;
+}
+// const example = [
+//   {
+//     "file_id": "abcdef",
+//     "name": "Bored Ape 1",
+//     "price": 0.003,
+//     "attributes": '[{"trait_type":"111","display_type":"","value":"222"}]',
+//     "quantity": 3
+//   }
+// ];
+// console.log(JSON.stringify(example));

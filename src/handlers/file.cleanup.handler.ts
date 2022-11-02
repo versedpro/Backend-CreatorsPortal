@@ -9,8 +9,8 @@ import { UploadFilesData } from '../interfaces/organization';
  * @param next Next Function
  */
 export async function cleanUpMulterFiles(req: Request, res: Response, next: NextFunction) {
-  res.on('end', () => {
-
+  res.on('end', async () => {
+    await cleanupFiles(req);
   });
   next();
 }

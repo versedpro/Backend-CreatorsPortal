@@ -3,7 +3,6 @@ import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-clien
 import { BigNumber, ethers } from 'ethers';
 import {
   AddMaxSupplyCallRequest,
-  DeployCollectionContractRequest,
   GetTokenBalanceCallRequest,
   SetMintPriceCallRequest,
   SetRoyaltyRequest
@@ -11,9 +10,10 @@ import {
 import { Logger } from '../helpers/Logger';
 import { convertRpcLogEvents } from '../helpers/event.helper';
 import { defenderConfig, lunaFactoryAddresses } from '../constants';
+import { GetDeployRequestBodyResponse } from '../interfaces/collection';
 
-const FACTORY_ABI = require('../abis/LunaFactory.json');
-const COLLECTION_ABI = require('../abis/LunaCollectible.json');
+const FACTORY_ABI = require('../abis/InsomniaFactory.json');
+const COLLECTION_ABI = require('../abis/InsomniaCollectible.json');
 
 export class ContractService {
   signer: DefenderRelaySigner;
@@ -30,21 +30,21 @@ export class ContractService {
   }
 
 
-  getDeployParams(body: DeployCollectionContractRequest): any[] {
+  getDeployParams(body: GetDeployRequestBodyResponse): any[] {
     return [
       body.collectionName,
       body.collectionSymbol,
       body.metadataUriPrefix,
       body.royaltyAddress,
-      body.tokenId,
-      ethers.utils.parseEther(body.price),
-      body.quantity || ethers.constants.MaxInt256,
+      body.tokenCount,
+      body.mintPrices,
+      body.maxSupplies,
       body.royalty,
       { gasLimit: 5000000 },
     ];
   }
 
-  async estimateDeploymentGas(body: DeployCollectionContractRequest): Promise<string | undefined> {
+  async estimateDeploymentGas(body: GetDeployRequestBodyResponse): Promise<string | undefined> {
     try {
       const factory = new ethers.Contract(this.lunaFactoryAddress, FACTORY_ABI, this.signer);
       const gasEstimate = await factory.estimateGas.deployERC1155(
@@ -59,11 +59,12 @@ export class ContractService {
     }
   }
 
-  async deployNftCollection(body: DeployCollectionContractRequest): Promise<any> {
+  async deployNftCollection(body: GetDeployRequestBodyResponse): Promise<any> {
     try {
       const factory = new ethers.Contract(this.lunaFactoryAddress, FACTORY_ABI, this.signer);
+      const req = this.getDeployParams(body);
       const tx = await factory.deployERC1155(
-        ...this.getDeployParams(body),
+        ...req,
       );
       const minedTx = await tx.wait();
       minedTx.logs = convertRpcLogEvents(minedTx.logs, FACTORY_ABI);

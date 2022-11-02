@@ -1,5 +1,5 @@
 import { convertRpcLogEvents } from '../helpers/event.helper';
-const FACTORY_ABI = require('../abis/LunaFactory.json');
+const FACTORY_ABI = require('../abis/InsomniaFactory.json');
 
 const newTx = require('./data/newTx.json');
 

@@ -224,18 +224,18 @@
       },
       {
         "internalType": "uint256",
-        "name": "_tokenId",
+        "name": "_tokenCount",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_mintPrice",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_mintPrices",
+        "type": "uint256[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_maxSupply",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_maxSupplies",
+        "type": "uint256[]"
       },
       {
         "internalType": "uint256",

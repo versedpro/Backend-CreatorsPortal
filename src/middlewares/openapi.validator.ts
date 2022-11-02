@@ -23,6 +23,9 @@ export const ApiValidator = OpenApiValidator.middleware({
     if (path.endsWith('/answers')) {
       return true;
     }
+    if (path.endsWith('/assets')) {
+      return true;
+    }
     const split = path.trim().split('/');
     if (split.length === 5 && split[1] === 'api' && split[3] === 'admin' && split[4].match(new RegExp('(\\b0x[a-fA-F0-9]{40}\\b)'))) {
       return true;
