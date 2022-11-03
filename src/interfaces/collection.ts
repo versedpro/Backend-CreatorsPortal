@@ -257,7 +257,7 @@ export interface UpdateCollectionAssetData {
   quantity?: number;
   max_supply?: number;
   price?: number;
-  attributes?:  Attribute[];
+  attributes?: Attribute[] | string;
 }
 
 export interface UpdateCollectionAssetRequest {
@@ -288,7 +288,7 @@ export interface UpdateCollectionAllAssetData {
   quantity?: number;
   max_supply?: number;
   price?: number;
-  attributes?: Attribute[];
+  attributes?: Attribute[] | string;
 }
 // const example = [
 //   {

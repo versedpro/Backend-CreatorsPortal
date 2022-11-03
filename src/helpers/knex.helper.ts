@@ -631,6 +631,9 @@ export class KnexHelper {
       body.max_supply = body.quantity;
       delete body.quantity;
     }
+    if (body.attributes) {
+      body.attributes = JSON.stringify(body.attributes);
+    }
     if (Object.values(body).map(x => x !== undefined).length > 0) {
       return knex(dbTables.nftItems)
         .update(body)
@@ -660,6 +663,9 @@ export class KnexHelper {
     if (body.quantity) {
       body.max_supply = body.quantity;
       delete body.quantity;
+    }
+    if (body.attributes) {
+      body.attributes = JSON.stringify(body.attributes);
     }
     if (Object.values(body).map(x => x !== undefined).length > 0) {
       return knex(dbTables.nftItems)

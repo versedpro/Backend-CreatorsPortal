@@ -19,7 +19,7 @@ export async function addCollectionAssetsValidator(req: Request, res: Response, 
 function findAddError(req: Request): string | undefined {
   const assetsData = req.body.assets_data;
   if (!assetsData) {
-    return 'assetsData field is required';
+    return 'assets_data field is required';
   }
   try {
     const parsedData = JSON.parse(assetsData) as unknown as AddCollectionAssetData[];
