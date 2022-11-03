@@ -202,7 +202,12 @@ export async function addCollection(request: CreateCollectionRequest): Promise<C
       } as CreateCollectionResponse;
 
     }
-    return collection;
+    if (currentCollectionStatus) {
+      await KnexHelper.updateNftCollectionPayment(data.collection_id, {
+        status: currentCollectionStatus,
+      });
+    }
+    return await KnexHelper.getNftCollectionByID(collectionId);
   } catch (err: any) {
     // If error occurs Release LOCK
     if (currentCollectionStatus) {
