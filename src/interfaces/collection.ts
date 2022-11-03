@@ -1,6 +1,6 @@
 import { Pagination } from './pagination';
 import { UploadFilesData } from './organization';
-import { NftItem } from './nft';
+import { Attribute, NftItem } from './nft';
 import { BigNumber, BigNumberish } from 'ethers';
 
 export enum FirstPartyDatumType {
@@ -226,7 +226,6 @@ export interface AddCollectionAssetRequest {
   organizationId: string,
   collectionId: string,
   files: Express.Multer.File[];
-  assets_data: AddCollectionAssetData[];
 }
 
 export interface RemoveCollectionAssetRequest {
@@ -256,8 +255,9 @@ export interface UpdateCollectionAssetData {
   id: string;
   name?: string;
   quantity?: number;
+  max_supply?: number;
   price?: number;
-  attributes?: string;
+  attributes?:  Attribute[];
 }
 
 export interface UpdateCollectionAssetRequest {
@@ -275,6 +275,20 @@ export interface GetDeployRequestBodyResponse {
   mintPrices: BigNumber[];
   maxSupplies: BigNumberish[];
   royalty: number;
+}
+
+export interface UpdateCollectionAllAssetsRequest {
+  organizationId: string,
+  collectionId: string,
+  data: UpdateCollectionAllAssetData,
+}
+
+export interface UpdateCollectionAllAssetData {
+  name?: string;
+  quantity?: number;
+  max_supply?: number;
+  price?: number;
+  attributes?: Attribute[];
 }
 // const example = [
 //   {

@@ -546,8 +546,8 @@ export async function getMints(body: GetMintTransactionsRequest): Promise<GetMin
 }
 
 export async function addCollectionAssets(request: AddCollectionAssetRequest): Promise<AssetUploadResponseData> {
-  const { organizationId, collectionId, files, assets_data } = request;
-  if (!files || (files.length !== assets_data.length)) {
+  const { organizationId, collectionId, files } = request;
+  if (!files) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload assets data for all files uploaded');
   }
   const collection = await getCollectionByIdAndCreator({ organizationId, collectionId });
@@ -572,17 +572,17 @@ export async function addCollectionAssets(request: AddCollectionAssetRequest): P
   if (!files) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Please upload files');
   }
-  for (let i = 0; i < assets_data.length; i++) {
+  for (let i = 0; i < files.length; i++) {
     try {
       const file = files[i];
-      const assetDatum = assets_data[i];
+      // const assetDatum = assets_data[i];
 
       const assetId = uuidv4();
       // upload and create db record
       // const loc = await s3UploadSingle(file, folder, assetId);
       const uploadResponse = await s3UploadSingleAllResolutions(file, folder, assetId);
 
-      assetIdMap[`${assetDatum.file_id}`] = assetId;
+      // assetIdMap[`${assetDatum.file_id}`] = assetId;
 
       const nftMetadata: NftItem = {
         id: assetId,
@@ -590,10 +590,11 @@ export async function addCollectionAssets(request: AddCollectionAssetRequest): P
         token_format: 'ERC1155',
         chain: collection.chain,
         description: collection.description,
-        name: assetDatum.name,
-        attributes: assetDatum.attributes,
-        max_supply: assetDatum.quantity?.toString(),
-        price: assetDatum.price,
+        name: '',
+        // name: assetDatum.name,
+        // attributes: assetDatum.attributes,
+        // max_supply: assetDatum.quantity?.toString(),
+        // price: assetDatum.price,
         royalties: collection.royalties?.toString(),
         image: uploadResponse.original,
         image_256: uploadResponse.image256,
@@ -641,7 +642,17 @@ export async function updateCollectionAssets(request: UpdateCollectionAssetReque
   if (collection.status !== NftCollectionStatus.DRAFT) {
     throw new CustomError(StatusCodes.BAD_REQUEST, 'Collection needs to be in status DRAFT');
   }
-  for (const assetDatum of assets_data) {
-    await KnexHelper.updateNftItem(assetDatum.id, assetDatum);
+  if (assets_data[0].id === '00000000-0000-0000-0000-000000000000') {
+    const data = assets_data[0];
+    if (data.id) {
+      // @ts-ignore
+      delete data.id;
+    }
+    await KnexHelper.updateCollectionAllNftItems(collectionId, data);
+  } else {
+    for (const assetDatum of assets_data) {
+      await KnexHelper.updateNftItem(assetDatum.id, assetDatum);
+    }
   }
 }
+

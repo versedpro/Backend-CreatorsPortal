@@ -46,8 +46,7 @@ function findUpdateError(req: Request): string | undefined {
       }
       if (item.attributes) {
         try {
-          const parsedAttr = JSON.parse(item.attributes) as unknown as Attribute[];
-          // console.log(typeof typeof parsedAttr);
+          const parsedAttr = item.attributes as unknown as Attribute[];
           if (typeof parsedAttr !== 'object') {
             return 'Valid assets_data.*.attributes field is required';
           }

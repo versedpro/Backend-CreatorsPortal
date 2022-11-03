@@ -21,7 +21,7 @@ import {
   DbGetOrganizationCollectionsRequest,
   DbUpdateCollectionData, DbUpdateCollectionPayment,
   FirstPartyQuestionAnswerInsertData, GetCollectionAssetsRequest, GetCollectionAssetsResponse,
-  GetCollectionsResponse, UpdateCollectionAssetData
+  GetCollectionsResponse, UpdateCollectionAllAssetData, UpdateCollectionAssetData
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
 import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
@@ -625,11 +625,50 @@ export class KnexHelper {
   }
 
   static async updateNftItem(id: string, body: UpdateCollectionAssetData): Promise<number> {
-    return knex(dbTables.nftItems)
-      .update(body)
-      .where({
-        id,
-      });
+    // @ts-ignore
+    delete body.id;
+    if (body.quantity) {
+      body.max_supply = body.quantity;
+      delete body.quantity;
+    }
+    if (Object.values(body).map(x => x !== undefined).length > 0) {
+      return knex(dbTables.nftItems)
+        .update(body)
+        .where({
+          id,
+        });
+    }
+    return 0;
+  }
+
+  static async updateCollectionAllNftItems(collectionId: string, body: UpdateCollectionAllAssetData): Promise<number> {
+    if (body.name) {
+      await knex.raw(`DO $$
+          DECLARE
+          identifier UUID;
+          counter INTEGER := 1;
+          BEGIN
+          FOR identifier IN SELECT id FROM public.nft_items WHERE collection_id = '${collectionId}' ORDER BY created_at ASC
+          \tLOOP
+          \tUPDATE nft_items\tSET name='${body.name}' || counter WHERE id=identifier;
+          \tcounter := counter + 1;
+          \tEND LOOP;
+          END$$;`
+      );
+      delete body.name;
+    }
+    if (body.quantity) {
+      body.max_supply = body.quantity;
+      delete body.quantity;
+    }
+    if (Object.values(body).map(x => x !== undefined).length > 0) {
+      return knex(dbTables.nftItems)
+        .update(body)
+        .where({
+          collection_id: collectionId,
+        });
+    }
+    return 1;
   }
 
 }

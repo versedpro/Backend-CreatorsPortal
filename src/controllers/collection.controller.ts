@@ -309,7 +309,6 @@ export async function handleAddCollectionAssets(req: IExpressRequest, res: Expre
       organizationId: organizationId!,
       collectionId,
       files: req.files as Express.Multer.File[],
-      assets_data: req.body.assets_data,
     });
     return Response.success(res, {
       message: 'Successful',

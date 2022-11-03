@@ -393,30 +393,25 @@ paths:
               type: object
               required:
                 - assets
-                - assets_data
               properties:
                 assets:
                   type: array
                   items:
                     type: string
                     format: binary
-                assets_data:
-                  description: |
-                    JSON stringified array of AssetUploadData array
-                  type: string
-                  items:
-                    $ref: '#/components/schemas/AssetUploadData'
       responses:
         '200':
           description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddCollectionAssetResponse'
+                $ref: '#/components/schemas/GenericResponse'
     put:
       tags:
         - nft_collection
       summary: Update assets data; e.g name, quantity, price, attributes
+      description: |
+        N.B To mass update all tokens in a colleciton, just send one object in the array body and set id to 00000000-0000-0000-0000-000000000000.
       requestBody:
         content:
           application/json:
@@ -1678,6 +1673,9 @@ components:
         - name
         - amount
       properties:
+        id:
+          type: string
+          format: uuid
         name:
           minLength: 3
           maxLength: 30
@@ -1767,23 +1765,6 @@ components:
           items:
             $ref: '#/components/schemas/NftAttribute'
 
-    AddCollectionAssetResponse:
-      example:
-        {
-          "error": false,
-          "code": 200,
-          "data": {
-            "your_file_id": "601b746a-e1ac-481f-8e27-d5aa8d7bb4c2"
-          },
-          "message": "Successful"
-        }
-      allOf:
-        - $ref: '#/components/schemas/GenericResponse'
-        - type: object
-          properties:
-            data:
-              type: object
-
     RemoveCollectionAssetsResponse:
       allOf:
         - $ref: '#/components/schemas/GenericResponse'
@@ -1827,9 +1808,9 @@ components:
         price:
           type: number
         attributes:
-          type: string
+          type: array
           description: |
-            JSON stringified array of NftAttribute object
+            Array of NftAttribute object
           items:
             $ref: '#/components/schemas/NftAttribute'
 
