@@ -698,9 +698,7 @@ paths:
       operationId: addNftCollectionAssets
       summary: Upload up to 20 assets at once for a collection
       description: |
-        Upload a max of 20 asset files,
-        For each file, also add the asset data, the file_id is a randomly generated id on your end
-        it is just for the purpose of identifying the asset_id
+        Upload a max of 20 asset files per request.
       requestBody:
         content:
           multipart/form-data: # Media type

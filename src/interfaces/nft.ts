@@ -39,3 +39,11 @@ export interface NftItem {
   price?: number;
   royalties?: string;
 }
+
+export interface DeletedNftItemData {
+  id: string,
+  image?: string;
+  image_256?: string;
+  image_512?: string;
+  image_64?: string;
+}

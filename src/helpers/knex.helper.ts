@@ -24,7 +24,7 @@ import {
   GetCollectionsResponse, UpdateCollectionAllAssetData, UpdateCollectionAssetData
 } from '../interfaces/collection';
 import { TokenExistsError } from '../interfaces';
-import { NftItem, UpdateMetadataRequest } from '../interfaces/nft';
+import { DeletedNftItemData, NftItem, UpdateMetadataRequest } from '../interfaces/nft';
 import { GetItemRequest } from '../interfaces/get.item.request';
 import { UpdateUserDbRequest } from '../interfaces/user';
 import { OrgInvite, OrgInviteStatus } from '../interfaces/OrgInvite';
@@ -573,13 +573,13 @@ export class KnexHelper {
   }
 
   static async getNftsByIds(ids: string[]): Promise<NftItem[]> {
-    const result = await knex(dbTables.nftItems).select().whereRaw('id IN (?)', ids);
+    const result = await knex(dbTables.nftItems).select().whereIn('id', ids);
     return result as NftItem[];
   }
 
-  static async deleteNftsByIds(ids: string[]): Promise<{ id: string, image?: string }[]> {
-    const result = await knex(dbTables.nftItems).delete().whereRaw('id IN (?)', ids).returning(['id', 'image']);
-    return result as unknown as { id: string, image?: string }[];
+  static async deleteNftsByIds(ids: string[]): Promise<DeletedNftItemData[]> {
+    const result = await knex(dbTables.nftItems).delete().whereIn('id', ids).returning(['id', 'image']);
+    return result as unknown as DeletedNftItemData[];
   }
 
   static async getCollectionAssets(request: GetCollectionAssetsRequest): Promise<GetCollectionAssetsResponse> {
@@ -596,8 +596,8 @@ export class KnexHelper {
       .where(whereCheck);
 
     let countResult;
-    if (assets_ids && (assets_ids.length > 1)) {
-      countResult = await countQuery.andWhereRaw('id IN (?)', assets_ids).first();
+    if (assets_ids && (assets_ids.length > 0)) {
+      countResult = await countQuery.whereIn('id', assets_ids).first();
     } else {
       countResult = await countQuery.first();
     }
@@ -605,8 +605,8 @@ export class KnexHelper {
     const resultQuery = knex(dbTables.nftItems)
       .select()
       .where(whereCheck);
-    if (assets_ids && (assets_ids.length > 1)) {
-      resultQuery.andWhereRaw('id IN (?)', assets_ids);
+    if (assets_ids && (assets_ids.length > 0)) {
+      resultQuery.whereIn('id', assets_ids);
     }
     const result = await resultQuery.offset((page - 1) * size)
       .orderBy('created_at', (date_sort || 'desc').toLowerCase())

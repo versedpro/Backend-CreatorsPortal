@@ -630,6 +630,15 @@ export async function removeCollectionAssets(request: RemoveCollectionAssetReque
     if (nft.image) {
       imageLocations.push(nft.image);
     }
+    if (nft.image_64) {
+      imageLocations.push(nft.image_64);
+    }
+    if (nft.image_256) {
+      imageLocations.push(nft.image_256);
+    }
+    if (nft.image_512) {
+      imageLocations.push(nft.image_512);
+    }
   });
   await deleteMultipleFromS3(imageLocations);
   return nftItems.map(x => x.id);

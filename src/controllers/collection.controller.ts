@@ -324,7 +324,6 @@ export async function handleGetCollectionAssets(req: IExpressRequest, res: Expre
   try {
     const { page, size, date_sort, assets_ids } = req.query;
     const collectionId = req.params.collection_id;
-
     const response = await collectionService.getCollectionAssets({
       collection_id: collectionId,
       assets_ids: <string[]>assets_ids,
