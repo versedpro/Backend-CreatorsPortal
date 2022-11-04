@@ -653,7 +653,7 @@ export class KnexHelper {
           BEGIN
           FOR identifier IN SELECT id FROM public.nft_items WHERE collection_id = '${collectionId}' ORDER BY created_at ASC
           \tLOOP
-          \tUPDATE nft_items\tSET name='${body.name}' || counter WHERE id=identifier;
+          \tUPDATE nft_items\tSET name='${body.name} ' || counter WHERE id=identifier;
           \tcounter := counter + 1;
           \tEND LOOP;
           END$$;`
