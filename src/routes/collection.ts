@@ -2,7 +2,7 @@ import express from 'express';
 import * as controller from '../controllers/collection.controller';
 import { createCollectionValidator } from '../middlewares/create.collection.validator';
 import { updateCollectionValidator } from '../middlewares/update.collection.validator';
-import { multerUpload, collectionAssetMulterUpload } from '../helpers/aws/image.uploader';
+import { collectionAssetMulterUpload, multerUpload } from '../helpers/aws/image.uploader';
 import {
   createCollectionExpValidator,
   getCollectionExpValidator
@@ -10,11 +10,7 @@ import {
 import { cleanUpMulterFiles } from '../handlers/file.cleanup.handler';
 import { updateCollectionExpValidator } from '../middlewares/update.collection.exp.validator';
 import { payoutValidator } from '../middlewares/payout.validator';
-import {
-  addCollectionAssetsExpValidator,
-  addCollectionAssetsValidator,
-  deleteCollectionAssetsValidator
-} from '../middlewares/add.collection.asset.validator';
+import { deleteCollectionAssetsValidator } from '../middlewares/add.collection.asset.validator';
 import {
   updateCollectionAssetsExpValidator,
   updateCollectionAssetsValidator
