@@ -64,7 +64,7 @@ export const s3UploadSingleAllResolutions = async (file: Express.Multer.File, fo
   const image512 = await s3UploadOne(file, folder, `${name}_${dimensionMap.get(ImageSize.IMAGE_512)}x${dimensionMap.get(ImageSize.IMAGE_512)}`, buffer512);
 
   const buffer64 = await resizeImage(file, ImageSize.IMAGE_64);
-  const image64 = await s3UploadOne(file, folder, `${name}_${dimensionMap.get(ImageSize.IMAGE_64)}x${name}_${dimensionMap.get(ImageSize.IMAGE_64)}`, buffer64);
+  const image64 = await s3UploadOne(file, folder, `${name}_${dimensionMap.get(ImageSize.IMAGE_64)}x${dimensionMap.get(ImageSize.IMAGE_64)}`, buffer64);
 
   return {
     original,

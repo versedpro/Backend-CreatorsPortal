@@ -14,7 +14,11 @@ export const dimensionMap: Map<ImageSize, number> = new Map<ImageSize, number>([
 
 export async function resizeImage(file: Express.Multer.File, size: ImageSize): Promise<Buffer> {
   const dimension = dimensionMap.get(size);
-  return await sharp(file.path).resize({ width: dimension, height: dimension, fit: 'contain' }).toBuffer();
+  return await sharp(file.path).resize({
+    width: dimension,
+    height: dimension,
+    fit: 'inside',
+  }).toBuffer();
 }
 
 export interface S3UploadMultipleResponse {
