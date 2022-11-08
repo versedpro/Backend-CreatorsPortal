@@ -1,7 +1,7 @@
 import { Pagination } from './pagination';
 import { UploadFilesData } from './organization';
 import { Attribute, NftItem } from './nft';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, FixedNumber } from 'ethers';
 
 export enum FirstPartyDatumType {
   SHORT_TEXT = 'SHORT_TEXT',
@@ -274,7 +274,7 @@ export interface GetDeployRequestBodyResponse {
   tokenCount: number;
   mintPrices: BigNumber[];
   maxSupplies: BigNumberish[];
-  royalty: number;
+  royalty: FixedNumber;
 }
 
 export interface UpdateCollectionAllAssetsRequest {
