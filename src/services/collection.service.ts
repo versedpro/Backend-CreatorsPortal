@@ -37,7 +37,7 @@ import axios from 'axios';
 import { PaymentPurpose } from '../interfaces/stripe.card';
 import { DbInsertPaymentRequest, PaymentActive, PaymentMethod, PaymentStatus } from '../interfaces/PaymentRequest';
 import { GetMintsResponse, GetMintTransactionsRequest } from '../interfaces/mint.transaction';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, ethers, FixedNumber } from 'ethers';
 
 export async function uploadImages(folder: string, files: UploadFilesData, onlyNftImage = true): Promise<UploadImagesResult> {
   const imageLocations: string[] = [];
@@ -248,7 +248,7 @@ async function getDeployRequestBody(collection: CollectionInfo): Promise<GetDepl
       tokenCount: resNfts.length,
       mintPrices: resNfts.map(nftItem => ethers.utils.parseEther(nftItem.price?.toString() || '0')),
       maxSupplies: resNfts.map(nftItem => nftItem.max_supply ? BigNumber.from(nftItem.max_supply) : ethers.constants.MaxInt256),
-      royalty: parseInt(collection.royalties?.toString() || '0'),
+      royalty: FixedNumber.fromString(collection.royalties?.toString() || '0'),
     };
   }
 }

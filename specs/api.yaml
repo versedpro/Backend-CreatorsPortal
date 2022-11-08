@@ -527,7 +527,8 @@ paths:
       summary: Create NFT collection for organization
       description: |
         Set create_contract to false if you want to save progress and finish later.
-        name and collection_name are always required
+        name and collection_name are always required.
+        If multiple NFT, price and quantity do not apply, so not needed.
       requestBody:
         content:
           multipart/form-data: # Media type
@@ -560,10 +561,12 @@ paths:
                   type: string
                   format: binary
                 royalties:
-                  type: string
-                  format: int32
-                  description: In percentage, e.g 7
+                  type: number
+                  format: float
+                  multipleOf: 0.01
+                  minimum: 0
                   maximum: 100
+                  description: percentage, e.g 7.45, 3, 3.9. 10.55; maximum of 2 decimal places
                 royalty_address:
                   type: string
                   pattern: (\b0x[a-fA-F0-9]{40}\b)
@@ -1563,11 +1566,12 @@ components:
         image_data:
           type: string
         royalties:
-          type: integer
-          format: int32
-          minimum: 1
+          type: number
+          format: float
+          multipleOf: 0.01
+          minimum: 0
           maximum: 100
-          description: percentage, e.g 7
+          description: percentage, e.g 7.45, 3, 3.9. 10.55; maximum of 2 decimal places
         attributes:
           type: array
           items:
@@ -1672,6 +1676,10 @@ components:
         contract_balance:
           description: balance for collection contract
           type: string
+        is_multiple_nft:
+          description: set to true for multiple NFTs
+          type: string
+          default: false
         created_at:
           type: string
           format: 'date-time'

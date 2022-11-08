@@ -32,7 +32,7 @@ export const createCollectionExpValidator = () => {
       .optional()
       .trim()
       .bail(),
-    body('royalties', 'royalties must be an integer between 1 and 100')
+    body('royalties', 'royalties must be a decimal(2 floating points) between 0 and 100')
       .optional()
       .trim()
       .custom((value) => {
@@ -40,10 +40,13 @@ export const createCollectionExpValidator = () => {
           return false;
         }
         const num = Number(value);
-        if (!Number.isInteger(num)) {
-          return false;
+        const split = value.toString().split('.');
+        if (split.length > 1) {
+          if(split[1].length > 2) {
+            return false;
+          }
         }
-        return (num >= 1) && (num <= 100);
+        return (num >= 0) && (num <= 100);
       })
       .bail(),
     body('royalty_address')
