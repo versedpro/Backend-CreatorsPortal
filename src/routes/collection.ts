@@ -52,8 +52,6 @@ router.get('/:collection_id/mints', controller.handleGetMintTransactions);
 router.post('/:collection_id/assets',
   collectionAssetMulterUpload.array('assets', 20),
   cleanUpMulterFiles,
-  // addCollectionAssetsExpValidator(),
-  // addCollectionAssetsValidator,
   controller.handleAddCollectionAssets,
 );
 
